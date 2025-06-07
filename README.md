@@ -30,6 +30,8 @@ pip install haconiwa
 
 ## ⚡ Quick Start
 
+> 🎭 **Important**: All commands shown below are **demonstration purposes only**. These commands currently display help information and basic structure, but the actual functionality is under development. We are actively working on implementing the full features.
+
 ### 1. View Available Commands
 ```bash
 haconiwa --help
@@ -67,6 +69,8 @@ haconiwa watch tail worker-a
 ```
 
 ## 📖 Command Reference
+
+> 🔧 **Development Note**: The commands listed below are currently **for demonstration and testing purposes**. While the CLI structure is functional, most commands will show help information or placeholder responses. We are actively developing the underlying functionality for each command group.
 
 The CLI tool provides 7 main command groups:
 
@@ -112,19 +116,23 @@ Development environment and world management
 
 ## 🛠️ Development Status
 
+> 🎬 **Current Phase**: **Demonstration & Prototyping**  
+> Most CLI commands are currently demonstration placeholders that show the intended structure and help information. We are actively developing the core functionality behind each command.
+
 ### ✅ Completed Features
 - Basic CLI structure with 7 command groups
-- PyPI package distribution
-- Core project initialization
+- PyPI package distribution and installation
+- Core project initialization framework
 - Help system and command documentation
+- Command group organization and routing
 
 ### 🚧 In Development
-- AI agent spawning and management
-- tmux session integration
-- Task management with git-worktree
-- Resource scanning functionality
-- Real-time monitoring system
-- World/environment management
+- AI agent spawning and management (placeholder → real implementation)
+- tmux session integration (placeholder → real implementation)
+- Task management with git-worktree (placeholder → real implementation)
+- Resource scanning functionality (placeholder → real implementation)
+- Real-time monitoring system (placeholder → real implementation)
+- World/environment management (placeholder → real implementation)
 
 ### 📋 Planned Features
 - Advanced AI agent coordination
@@ -170,7 +178,20 @@ We welcome contributions to the project! Since this is an active development pro
 
 ## ⚠️ Disclaimer
 
-This project is in early alpha development. Features may be incomplete, unstable, or subject to significant changes. Use in production environments is not recommended at this time.
+This project is in early alpha development and **demonstration phase**. Current CLI commands are primarily placeholders showing the intended interface design. Most functionality is under active development and not yet implemented.
+
+**What works now:**
+- CLI installation and command structure
+- Help system and documentation
+- Basic command routing
+
+**What's coming:**
+- Full implementation of all advertised features
+- AI agent coordination functionality  
+- Integration with development tools
+- Real task and session management
+
+Use in production environments is not recommended at this time. This is a development preview showcasing the intended user experience.
 
 ---
 
