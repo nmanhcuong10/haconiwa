@@ -1,0 +1,67 @@
+import sqlalchemy
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+import pandas as pd
+import json
+import yaml
+from sqlalchemy.exc import SQLAlchemyError
+from haconiwa.core.config import Config
+
+class DBFetcher:
+    def __init__(self):
+        self.config = Config("config.yaml")
+        # Default SQLite database for now
+        self.engine = create_engine("sqlite:///haconiwa.db", pool_size=10, max_overflow=20)
+        self.Session = sessionmaker(bind=self.engine)
+
+    def execute_query(self, query, params=None):
+        session = self.Session()
+        try:
+            result = session.execute(query, params)
+            return result.fetchall()
+        except SQLAlchemyError as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def fetch_as_dataframe(self, query, params=None):
+        try:
+            result = self.execute_query(query, params)
+            return pd.DataFrame(result)
+        except Exception as e:
+            print(f"Error fetching data: {e}")
+            return None
+
+    def fetch_as_json(self, query, params=None):
+        df = self.fetch_as_dataframe(query, params)
+        if df is not None:
+            return df.to_json(orient='records')
+        return None
+
+    def fetch_as_yaml(self, query, params=None):
+        df = self.fetch_as_dataframe(query, params)
+        if df is not None:
+            return yaml.dump(df.to_dict(orient='records'))
+        return None
+
+    def fetch_as_csv(self, query, params=None):
+        df = self.fetch_as_dataframe(query, params)
+        if df is not None:
+            return df.to_csv(index=False)
+        return None
+
+    def retry_query(self, query, params=None, retries=3):
+        for attempt in range(retries):
+            try:
+                return self.execute_query(query, params)
+            except SQLAlchemyError as e:
+                if attempt < retries - 1:
+                    continue
+                else:
+                    raise e
+
+# Example usage:
+# db_fetcher = DBFetcher()
+# result = db_fetcher.fetch_as_json("SELECT * FROM users")
+# print(result)

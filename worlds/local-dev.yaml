@@ -1,0 +1,63 @@
+import React, { useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+
+const LocalDev: React.FC = () => {
+  return (
+    <div className="flex justify-center bg-white dark:bg-gray-800 pt-10">
+      <Card className="w-full max-w-2xl bg-card">
+        <CardHeader className="bg-card">
+          <CardTitle className="text-center bg-card">Local-Dev ワールド定義</CardTitle>
+          <CardDescription className="bg-card">
+            Python製 haconiwa ワールド定義ファイル（YAML形式）
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="bg-card">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">ワールドID</h3>
+            <p>local-dev</p>
+          </div>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">プロバイダー設定</h3>
+            <p>local, docker, lxc</p>
+          </div>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">ネットワーク設定</h3>
+            <p>ポート、ファイアウォール</p>
+          </div>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">ストレージ設定</h3>
+            <p>ボリューム、マウントポイント</p>
+          </div>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">環境変数とシステム設定</h3>
+            <p>環境変数、システム設定</p>
+          </div>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">Pythonランタイム設定</h3>
+            <p>バージョン、パッケージ</p>
+          </div>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">セキュリティ設定</h3>
+            <p>namespace分離、権限</p>
+          </div>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">監視・ログ設定</h3>
+            <p>監視設定、ログ設定</p>
+          </div>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">バックアップ・復旧設定</h3>
+            <p>バックアップ設定、復旧設定</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default LocalDev;

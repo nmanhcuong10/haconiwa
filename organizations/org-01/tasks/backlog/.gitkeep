@@ -1,0 +1,17 @@
+import React, { useState } from 'react';
+
+const .gitkeep: React.FC = () => {
+  return (
+    <Card className="w-full bg-white dark:bg-gray-800">
+      <CardHeader className="bg-card">
+        <CardTitle className="bg-card">Git ディレクトリ保持ファイル</CardTitle>
+        <CardDescription className="bg-card">空のbacklogディレクトリをGitで管理するためのファイル</CardDescription>
+      </CardHeader>
+      <CardContent className="bg-card">
+        {/* ディレクトリ構造の維持 */}
+        {/* 将来的なタスクファイルの配置場所として機能 */}
+      </CardContent>
+    </Card>
+  );
+};
+export default .gitkeep;

@@ -1,0 +1,14 @@
+# haconiwa/agent/__init__.py
+
+class Agent:
+    def __init__(self):
+        self.agents = []
+
+    def register_agent(self, agent):
+        self.agents.append(agent)
+
+    def get_agents(self):
+        return self.agents
+
+# エージェント管理機能のインスタンスを作成
+agent_manager = Agent()

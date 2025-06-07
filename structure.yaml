@@ -1,0 +1,1184 @@
+src:
+  structure.yaml:
+    content: |-
+      「箱庭 (haconiwa)」AI協調開発支援Python CLIツールプロジェクト
+      - プロジェクト概要:
+        - PyPIパッケージ名: haconiwa
+        - 7つのグループ・36のサブコマンドを持つPython製CLIツール
+        - AI エージェント（Boss/Worker/Manager）による協調開発支援
+        - tmux区画管理、git-worktree連動、監視機能を統合
+      - 技術スタック:
+        - 開発言語: Python 3.8+
+        - CLIフレームワーク: Typer
+        - セッション管理: tmux
+        - バージョン管理: git worktree
+        - 監視: Prometheus互換
+        - 仮想化: Docker/LXC対応
+      - アーキテクチャ:
+        - モジュール構成: core/world/space/resource/agent/task/watch/utils
+        - 分散実行: 複数のworld(VM/namespace)で並列開発
+        - リソース管理: ファイルスキャン、DB連携、外部API統合
+        - タスク管理: git-worktreeベースの開発フロー
+    agent選定理由: |-
+      gemini-2.0-flash-thinking-exp-1219は、大規模なPythonプロジェクト全体の構造設計と
+      アーキテクチャ全体の整合性確保に優れており、複数モジュール間の依存関係を
+      効率的に管理できるため選択しました。
+    api選定理由: |-
+      プロジェクト構造定義ファイルのため外部APIは使用しません。
+    dependency: []
+    agent: "gemini-2.0-flash-thinking-exp-1219"
+    api: []
+  .gitignore:
+    content: |-
+      Python プロジェクト用 .gitignore ファイル
+      - Python関連:
+        - __pycache__/, *.pyc, *.pyo, *.pyd
+        - .Python, build/, develop-eggs/, dist/, downloads/
+        - eggs/, .eggs/, lib/, lib64/, parts/, sdist/, var/
+        - wheels/, *.egg-info/, .installed.cfg, *.egg
+      - 仮想環境: .env, .venv, env/, venv/, ENV/, env.bak/, venv.bak/
+      - IDE設定: .vscode/, .idea/, *.swp, *.swo, *~
+      - OS固有: .DS_Store, Thumbs.db
+      - haconiwa固有:
+        - /worlds/*/state/
+        - /organizations/*/tasks/in-progress/*
+        - /organizations/*/tasks/done/*
+        - .haconiwa_cache/
+    agent選定理由: |-
+      claude-3-5-sonnet-20241022は、Python開発環境の標準的な設定ファイル生成に適しており、
+      プロジェクト固有の除外パターンも適切に設定できるため選択しました。
+    api選定理由: |-
+      Git設定ファイルのため外部APIは使用しません。
+    dependency: []
+    agent: "claude-3-5-sonnet-20241022"
+    api: []
+  LICENSE:
+    content: |-
+      Python プロジェクト用 MIT ライセンス ファイル
+      - haconiwa AI協調開発支援CLIツールのオープンソースライセンス
+      - MIT License形式でのライセンス条文
+      - 著作権表示とライセンス条件の明記
+      - 免責事項と保証制限の記載
+    agent選定理由: |-
+      gpt-4o-miniは、標準的なライセンス文書の生成に適しており、
+      法的に適切なMITライセンス条文を正確に記述できるため選択しました。
+    api選定理由: |-
+      ライセンス文書のため外部APIは使用しません。
+    dependency: []
+    agent: "gpt-4o-mini"
+    api: []
+  README.md:
+    content: |-
+      Python製 haconiwa AI協調開発支援CLIツールのREADME
+      - プロジェクト概要と特徴説明
+      - インストール方法（pip install haconiwa）
+      - クイックスタートガイド
+      - 7つのコマンドグループ（core/world/space/resource/agent/task/watch）の紹介
+      - 使用例とデモフロー
+      - 開発環境セットアップ手順（Python 3.8+, requirements.txt）
+      - ライセンス情報とコントリビューション方法
+      - 箱庭コンセプトの説明（ミニチュア世界での協調開発）
+    agent選定理由: |-
+      claude-3-5-sonnet-20241022は、技術文書の執筆とPythonプロジェクトの
+      説明に優れており、ユーザーフレンドリーなREADMEを作成できるため選択しました。
+    api選定理由: |-
+      ドキュメント作成のため外部APIは使用しません。
+    dependency: ["src/pyproject.toml"]
+    agent: "claude-3-5-sonnet-20241022"
+    api: []
+  pyproject.toml:
+    content: |-
+      Python プロジェクト設定ファイル（PEP 621準拠）
+      - プロジェクト情報: name="haconiwa", version, description
+      - 依存関係: typer, tmux-python, gitpython, prometheus-client
+      - エントリーポイント: [project.scripts] haconiwa = "haconiwa.cli:app"
+      - 開発依存関係: pytest, black, flake8, mypy
+      - ビルド設定: [build-system] requires = ["setuptools>=45", "wheel"]
+      - Python バージョン要件: requires-python = ">=3.8"
+      - オプション依存関係: [project.optional-dependencies] docker = ["docker"]
+    agent選定理由: |-
+      claude-3-5-sonnet-20241022は、現代的なPythonプロジェクト設定（PEP 621）の
+      記述に精通しており、適切な依存関係管理ができるため選択しました。
+    api選定理由: |-
+      プロジェクト設定ファイルのため外部APIは使用しません。
+    dependency: []
+    agent: "claude-3-5-sonnet-20241022"
+    api: []
+  docs:
+    architecture.md:
+      content: |-
+        Python製 haconiwa アーキテクチャ設計ドキュメント
+        - システム全体構成図とモジュール関係
+        - 7層アーキテクチャ（core/world/space/resource/agent/task/watch）
+        - AIエージェント協調メカニズム（Boss-Worker-Manager パターン）
+        - tmux区画管理とgit-worktree連動設計
+        - 分散実行アーキテクチャ（複数world間連携）
+        - セキュリティ設計（namespace分離、権限管理）
+        - 拡張性設計（プラグインシステム、カスタムプロバイダー）
+        - Pythonクラス設計とインターフェース定義
+      agent選定理由: |-
+        gemini-2.0-flash-thinking-exp-1219は、複雑なシステムアーキテクチャの
+        理解と文書化に優れており、Python設計パターンを適切に説明できるため選択しました。
+      api選定理由: |-
+        アーキテクチャドキュメント作成のため外部APIは使用しません。
+      dependency: ["src/pyproject.toml"]
+      agent: "gemini-2.0-flash-thinking-exp-1219"
+      api: []
+    cli_reference.md:
+      content: |-
+        Python製 haconiwa CLI リファレンスドキュメント
+        - 全36サブコマンドの詳細説明
+        - グループ別コマンド一覧（core/world/space/resource/agent/task/watch）
+        - オプション引数とフラグの説明
+        - 使用例とサンプルコード（Pythonスクリプトからの呼び出し含む）
+        - エラーハンドリングと戻り値
+        - 設定ファイル（config.yaml）の形式
+        - 環境変数の説明
+        - Typerフレームワークベースのコマンド体系説明
+      agent選定理由: |-
+        claude-3-5-sonnet-20241022は、CLIツールのドキュメント作成に適しており、
+        Typerフレームワークの機能説明も正確に記述できるため選択しました。
+      api選定理由: |-
+        CLI リファレンス作成のため外部APIは使用しません。
+      dependency: ["src/haconiwa/cli.py"]
+      agent: "claude-3-5-sonnet-20241022"
+      api: []
+    quickstart.md:
+      content: |-
+        Python製 haconiwa クイックスタートガイド
+        - 環境要件（Python 3.8+, tmux, git）
+        - インストール手順（pip install haconiwa）
+        - 初回セットアップ（haconiwa core init）
+        - 基本的な使用フロー（world作成→space設定→agent起動→task実行）
+        - サンプルプロジェクトでの実習
+        - トラブルシューティング
+        - 次のステップ（詳細ドキュメントへの誘導）
+        - Python開発者向けの統合方法
+      agent選定理由: |-
+        claude-3-5-sonnet-20241022は、初心者向けガイドの作成に適しており、
+        段階的な学習プロセスを設計できるため選択しました。
+      api選定理由: |-
+        クイックスタートガイド作成のため外部APIは使用しません。
+      dependency: ["src/haconiwa/core/config.py"]
+      agent: "claude-3-5-sonnet-20241022"
+      api: []
+  .github:
+    workflows:
+      ci.yml:
+        content: |-
+          Python プロジェクト用 GitHub Actions CI/CD 設定
+          - Python バージョン マトリックス（3.8, 3.9, 3.10, 3.11）
+          - 依存関係インストール（pip install -e .[dev]）
+          - コード品質チェック（black, flake8, mypy）
+          - テスト実行（pytest, coverage）
+          - パッケージビルド（python -m build）
+          - PyPI 配布チェック（twine check）
+          - セキュリティスキャン（bandit, safety）
+          - tmux, git テスト環境のセットアップ
+        agent選定理由: |-
+          claude-3-5-sonnet-20241022は、GitHub Actions設定とPython CI/CDパイプラインの
+          構築に精通しており、品質保証フローを適切に設計できるため選択しました。
+        api選定理由: |-
+          CI/CD設定ファイルのため外部APIは使用しません。
+        dependency: ["src/pyproject.toml"]
+        agent: "claude-3-5-sonnet-20241022"
+        api: []
+  scripts:
+    bootstrap.sh:
+      content: |-
+        Python 開発環境ブートストラップ用 シェルスクリプト
+        - Python 仮想環境の作成と有効化
+        - 依存関係の一括インストール（pip install -e .[dev]）
+        - pre-commit フックの設定
+        - tmux, git の設定確認
+        - 初期設定ファイルの生成
+        - 開発用データベースのセットアップ
+        - 開発サーバーの起動確認
+      agent選定理由: |-
+        gpt-4o-miniは、シェルスクリプトの生成とPython開発環境のセットアップ手順の
+        自動化に適しているため選択しました。
+      api選定理由: |-
+        開発環境セットアップスクリプトのため外部APIは使用しません。
+      dependency: ["src/pyproject.toml"]
+      agent: "gpt-4o-mini"
+      api: []
+    lint.sh:
+      content: |-
+        Python コード品質チェック用 シェルスクリプト
+        - black フォーマット実行
+        - flake8 リンティング
+        - mypy 型チェック
+        - bandit セキュリティスキャン
+        - isort インポート整理
+        - pytest カバレッジ測定
+        - エラー集約とレポート出力
+      agent選定理由: |-
+        gpt-4o-miniは、Python開発ツールの統合スクリプト作成に適しており、
+        効率的なコード品質チェックフローを構築できるため選択しました。
+      api選定理由: |-
+        コード品質チェックスクリプトのため外部APIは使用しません。
+      dependency: ["src/pyproject.toml"]
+      agent: "gpt-4o-mini"
+      api: []
+    release.sh:
+      content: |-
+        Python パッケージリリース用 シェルスクリプト
+        - バージョン番号の更新確認
+        - テストスイートの実行
+        - パッケージビルド（python -m build）
+        - twine による PyPI アップロード
+        - Git タグの作成とプッシュ
+        - GitHub リリースの作成
+        - リリースノートの生成
+      agent選定理由: |-
+        gpt-4o-miniは、Pythonパッケージのリリースプロセス自動化に適しており、
+        PyPIへの安全な配布フローを構築できるため選択しました。
+      api選定理由: |-
+        リリーススクリプトのため外部APIは使用しません。
+      dependency: ["src/pyproject.toml"]
+      agent: "gpt-4o-mini"
+      api: []
+  examples:
+    demo_flow.sh:
+      content: |-
+        Python製 haconiwa CLI デモ用 シェルスクリプト
+        - 箱庭世界の作成から破棄までの完全フロー
+        - haconiwa core init（初期化）
+        - haconiwa world create local-dev（開発環境作成）
+        - haconiwa space create（tmux区画設定）
+        - haconiwa agent spawn（AIエージェント起動）
+        - haconiwa task new/assign（タスク作成・割り当て）
+        - haconiwa watch start（監視開始）
+        - 実際の開発作業のシミュレーション
+        - 清理と終了処理
+      agent選定理由: |-
+        claude-3-5-sonnet-20241022は、実用的なデモスクリプトの作成に適しており、
+        ユーザー体験を重視したフロー設計ができるため選択しました。
+      api選定理由: |-
+        デモスクリプトのため外部APIは使用しません。
+      dependency: ["src/haconiwa/cli.py"]
+      agent: "claude-3-5-sonnet-20241022"
+      api: []
+  organizations:
+    org-01:
+      boss:
+        boss.py:
+          content: |-
+            Python製 Boss AIエージェント実装
+            - BaseAgentクラスからの継承
+            - タスク分解と割り当て戦略の実装
+            - Worker監視と進捗管理
+            - 意思決定ロジック（Python実装）
+            - エラーハンドリングと復旧処理
+            - 学習・最適化機能
+            - レポート生成とログ出力
+            - 外部システムとの連携インターフェース
+          agent選定理由: |-
+            gemini-2.0-flash-exp は、AIエージェントの複雑なロジック実装に優れており、
+            意思決定アルゴリズムとマネジメント機能をPythonで効率的に実装できるため選択しました。
+          api選定理由: |-
+            AIエージェント実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/agent/base.py", "src/haconiwa/agent/boss.py"]
+          agent: "gemini-2.0-flash-exp"
+          api: []
+      workers:
+        worker_a.py:
+          content: |-
+            Python製 Worker A AIエージェント実装
+            - フロントエンド開発専門のWorkerエージェント
+            - BaseAgentクラスからの継承とPython実装
+            - React/Vue.js/Angular等のフロントエンド技術対応
+            - UI/UXタスクの実行能力
+            - Bossからの指示受信と結果報告
+            - コード生成・テスト・デバッグ機能
+            - Git操作とワークフロー管理
+            - エラー処理と学習機能
+          agent選定理由: |-
+            claude-3-5-sonnet-20241022は、フロントエンド開発に特化したAIエージェントの
+            実装に適しており、UI/UX関連のタスク処理をPythonで効率的に実装できるため選択しました。
+          api選定理由: |-
+            Workerエージェント実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/agent/base.py", "src/haconiwa/agent/worker.py"]
+          agent: "claude-3-5-sonnet-20241022"
+          api: []
+        worker_b.py:
+          content: |-
+            Python製 Worker B AIエージェント実装
+            - バックエンド開発専門のWorkerエージェント
+            - BaseAgentクラスからの継承とPython実装
+            - API開発・データベース設計・サーバー構築対応
+            - Python/Java/Go等のバックエンド言語対応
+            - Bossからの指示受信と実行結果の報告
+            - セキュリティ・パフォーマンス最適化
+            - インフラ構築とDevOps対応
+            - 障害対応と復旧処理
+          agent選定理由: |-
+            gpt-4o は、バックエンド開発の複雑な要件とインフラ管理に精通しており、
+            サーバーサイドのAIエージェント実装をPythonで正確に構築できるため選択しました。
+          api選定理由: |-
+            Workerエージェント実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/agent/base.py", "src/haconiwa/agent/worker.py"]
+          agent: "gpt-4o"
+          api: []
+        worker_c.py:
+          content: |-
+            Python製 Worker C AIエージェント実装
+            - QA/テスト専門のWorkerエージェント
+            - BaseAgentクラスからの継承とPython実装
+            - 自動テスト設計・実行・結果検証
+            - 品質保証とバグレポート作成
+            - Bossからの指示に基づくテスト戦略実装
+            - パフォーマンステスト・セキュリティテスト対応
+            - CI/CDパイプライン統合
+            - テストデータ管理と環境構築
+          agent選定理由: |-
+            gemini-2.0-flash-exp は、QA・テスト分野の専門的な処理に優れており、
+            テスト自動化とエージェント連携をPythonで効率的に実装できるため選択しました。
+          api選定理由: |-
+            Workerエージェント実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/agent/base.py", "src/haconiwa/agent/worker.py"]
+          agent: "gemini-2.0-flash-exp"
+          api: []
+      tasks:
+        backlog:
+          .gitkeep:
+            content: |-
+              Python プロジェクト用 Git ディレクトリ保持ファイル
+              - 空のbacklogディレクトリをGitで管理するためのファイル
+              - ディレクトリ構造の維持
+              - 将来的なタスクファイルの配置場所として機能
+            agent選定理由: |-
+              gpt-4o-miniは、シンプルなファイル管理タスクに適しており、
+              効率的にディレクトリ構造を維持できるため選択しました。
+            api選定理由: |-
+              ディレクトリ保持ファイルのため外部APIは使用しません。
+            dependency: []
+            agent: "gpt-4o-mini"
+            api: []
+        in-progress:
+          .gitkeep:
+            content: |-
+              Python プロジェクト用 Git ディレクトリ保持ファイル
+              - 空のin-progressディレクトリをGitで管理するためのファイル
+              - 進行中タスクの配置場所として機能
+              - ディレクトリ構造の維持
+            agent選定理由: |-
+              gpt-4o-miniは、シンプルなファイル管理タスクに適しており、
+              効率的にディレクトリ構造を維持できるため選択しました。
+            api選定理由: |-
+              ディレクトリ保持ファイルのため外部APIは使用しません。
+            dependency: []
+            agent: "gpt-4o-mini"
+            api: []
+        done:
+          .gitkeep:
+            content: |-
+              Python プロジェクト用 Git ディレクトリ保持ファイル
+              - 空のdoneディレクトリをGitで管理するためのファイル
+              - 完了済みタスクの配置場所として機能
+              - ディレクトリ構造の維持
+            agent選定理由: |-
+              gpt-4o-miniは、シンプルなファイル管理タスクに適しており、
+              効率的にディレクトリ構造を維持できるため選択しました。
+            api選定理由: |-
+              ディレクトリ保持ファイルのため外部APIは使用しません。
+            dependency: []
+            agent: "gpt-4o-mini"
+            api: []
+      config.yaml:
+        content: |-
+          Python製 haconiwa 組織設定ファイル（YAML形式）
+          - 組織ID: org-01
+          - Bossエージェント設定（AIモデル、実行パラメータ）
+          - Workerエージェント設定（専門分野、能力定義）
+          - タスク管理設定（優先度、割り当てルール）
+          - 通信設定（エージェント間連携、ログレベル）
+          - リソース制限（CPU、メモリ、同時実行数）
+          - 学習・最適化設定
+          - セキュリティ設定（権限、アクセス制御）
+        agent選定理由: |-
+          claude-3-5-sonnet-20241022は、YAML設定ファイルの構造設計に優れており、
+          エージェント管理の複雑な設定をPythonシステムに適した形で記述できるため選択しました。
+        api選定理由: |-
+          設定ファイルのため外部APIは使用しません。
+        dependency: ["src/haconiwa/core/config.py"]
+        agent: "claude-3-5-sonnet-20241022"
+        api: []
+  worlds:
+    local-dev.yaml:
+      content: |-
+        Python製 haconiwa ワールド定義ファイル（YAML形式）
+        - ワールドID: local-dev
+        - プロバイダー設定（local/docker/lxc）
+        - ネットワーク設定（ポート、ファイアウォール）
+        - ストレージ設定（ボリューム、マウントポイント）
+        - 環境変数とシステム設定
+        - Pythonランタイム設定（バージョン、パッケージ）
+        - セキュリティ設定（namespace分離、権限）
+        - 監視・ログ設定
+        - バックアップ・復旧設定
+      agent選定理由: |-
+        gemini-2.0-flash-exp は、インフラストラクチャ設定とPython実行環境の
+        管理に優れており、世界定義の複雑な設定を適切に記述できるため選択しました。
+      api選定理由: |-
+        ワールド定義ファイルのため外部APIは使用しません。
+      dependency: ["src/haconiwa/world/provider/local.py"]
+      agent: "gemini-2.0-flash-exp"
+      api: []
+  tests:
+    __init__.py:
+      content: |-
+        Python テストパッケージ初期化ファイル
+        - testパッケージのPython初期化
+        - 共通テストユーティリティのインポート
+        - テスト設定の定義
+        - Pythonテストランナーとの統合設定
+      agent選定理由: |-
+        gpt-4o-miniは、Pythonパッケージの初期化ファイル作成に適しており、
+        シンプルで標準的な構造を効率的に生成できるため選択しました。
+      api選定理由: |-
+        Python初期化ファイルのため外部APIは使用しません。
+      dependency: []
+      agent: "gpt-4o-mini"
+      api: []
+    unit:
+      test_core.py:
+        content: |-
+          Python製 haconiwa core モジュール ユニットテスト
+          - pytest フレームワークを使用したテストケース
+          - config.py の設定管理機能テスト
+          - state.py の状態管理機能テスト
+          - logging.py のログ機能テスト
+          - upgrade.py のアップグレード機能テスト
+          - モックとフィクスチャを活用したPythonテスト
+          - エラーハンドリングのテスト
+          - 設定ファイル読み込みテスト
+        agent選定理由: |-
+          claude-3-5-sonnet-20241022は、Pythonテストコードの作成に優れており、
+          pytest フレームワークを活用した包括的なテストケースを作成できるため選択しました。
+        api選定理由: |-
+          ユニットテストのため外部APIは使用しません。
+        dependency: ["src/haconiwa/core/config.py", "src/haconiwa/core/state.py", "src/haconiwa/core/logging.py", "src/haconiwa/core/upgrade.py"]
+        agent: "claude-3-5-sonnet-20241022"
+        api: []
+      test_space.py:
+        content: |-
+          Python製 haconiwa space モジュール ユニットテスト
+          - pytest フレームワークを使用したテストケース
+          - tmux.py のセッション管理機能テスト
+          - space作成・削除・リサイズのテスト
+          - tmuxセッション操作のモックテスト
+          - エラーハンドリング（tmux未インストール等）のテスト
+          - 並行セッション管理のテスト
+          - Python tmuxライブラリとの統合テスト
+        agent選定理由: |-
+          claude-3-5-sonnet-20241022は、外部プロセス連携を含むPythonテストの作成に適しており、
+          tmux操作のモック化と検証を適切に実装できるため選択しました。
+        api選定理由: |-
+          ユニットテストのため外部APIは使用しません。
+        dependency: ["src/haconiwa/space/tmux.py"]
+        agent: "claude-3-5-sonnet-20241022"
+        api: []
+      test_resource.py:
+        content: |-
+          Python製 haconiwa resource モジュール ユニットテスト
+          - pytest フレームワークを使用したテストケース
+          - path_scanner.py のファイルスキャン機能テスト
+          - db_fetcher.py のデータベース操作テスト
+          - 様々なファイル形式対応のテスト
+          - データベース接続エラーハンドリングテスト
+          - 大容量ファイル処理のテスト
+          - Pythonのpathlib・sqlite3ライブラリとの統合
+        agent選定理由: |-
+          gpt-4o は、データベース操作とファイルシステム処理のテストに優れており、
+          リソース管理機能の複雑なテストケースをPythonで適切に実装できるため選択しました。
+        api選定理由: |-
+          ユニットテストのため外部APIは使用しません。
+        dependency: ["src/haconiwa/resource/path_scanner.py", "src/haconiwa/resource/db_fetcher.py"]
+        agent: "gpt-4o"
+        api: []
+      test_agent.py:
+        content: |-
+          Python製 haconiwa agent モジュール ユニットテスト
+          - pytest フレームワークを使用したテストケース
+          - base.py の基底エージェントクラステスト
+          - boss.py のBossエージェント機能テスト
+          - worker.py のWorkerエージェント機能テスト
+          - manager.py のManagerエージェント機能テスト
+          - エージェント間通信のテスト
+          - タスク割り当て・実行のテスト
+          - AIモデル連携のモックテスト
+        agent選定理由: |-
+          gemini-2.0-flash-exp は、AIエージェントの複雑な振る舞いテストに適しており、
+          非同期処理やエージェント間通信をPythonで効率的にテストできるため選択しました。
+        api選定理由: |-
+          ユニットテストのため外部APIは使用しません。
+        dependency: ["src/haconiwa/agent/base.py", "src/haconiwa/agent/boss.py", "src/haconiwa/agent/worker.py", "src/haconiwa/agent/manager.py"]
+        agent: "gemini-2.0-flash-exp"
+        api: []
+      test_task.py:
+        content: |-
+          Python製 haconiwa task モジュール ユニットテスト
+          - pytest フレームワークを使用したテストケース
+          - worktree.py のgit-worktree操作テスト
+          - タスク作成・割り当て・完了フローテスト
+          - git操作のモックテスト
+          - ブランチ管理とマージのテスト
+          - 複数タスク並行実行のテスト
+          - エラー復旧処理のテスト
+          - Pythonのgitpythonライブラリとの統合
+        agent選定理由: |-
+          claude-3-5-sonnet-20241022は、git操作とワークフロー管理のテストに優れており、
+          バージョン管理システムとの統合テストをPythonで適切に実装できるため選択しました。
+        api選定理由: |-
+          ユニットテストのため外部APIは使用しません。
+        dependency: ["src/haconiwa/task/worktree.py"]
+        agent: "claude-3-5-sonnet-20241022"
+        api: []
+      test_watch.py:
+        content: |-
+          Python製 haconiwa watch モジュール ユニットテスト
+          - pytest フレームワークを使用したテストケース
+          - monitor.py の監視機能テスト
+          - メトリクス収集・集約のテスト
+          - アラート機能のテスト
+          - Prometheus連携のモックテスト
+          - パフォーマンス監視のテスト
+          - ログローテーション・アーカイブのテスト
+          - Pythonの監視ライブラリとの統合
+        agent選定理由: |-
+          gpt-4o は、監視・メトリクス関連のテストに精通しており、
+          複雑な監視システムのテストケースをPythonで正確に実装できるため選択しました。
+        api選定理由: |-
+          ユニットテストのため外部APIは使用しません。
+        dependency: ["src/haconiwa/watch/monitor.py"]
+        agent: "gpt-4o"
+        api: []
+    integration:
+      test_end_to_end.py:
+        content: |-
+          Python製 haconiwa 統合テスト（E2Eテスト）
+          - pytest フレームワークを使用した統合テストケース
+          - 全コンポーネント連携のテスト
+          - 実際のワークフロー（world作成→agent起動→task実行→監視）のテスト
+          - 複数エージェント協調動作のテスト
+          - 障害シナリオ・復旧のテスト
+          - パフォーマンス・負荷テスト
+          - セキュリティ統合テスト
+          - Pythonの統合テストフレームワーク活用
+        agent選定理由: |-
+          gemini-2.0-flash-thinking-exp-1219は、複雑な統合テストシナリオの設計に優れており、
+          エンドツーエンドテストをPythonで包括的に実装できるため選択しました。
+        api選定理由: |-
+          統合テストのため外部APIは使用しません。
+        dependency: ["src/haconiwa/cli.py", "src/haconiwa/core/config.py", "src/haconiwa/world/cli.py", "src/haconiwa/agent/cli.py", "src/haconiwa/task/cli.py", "src/haconiwa/watch/cli.py"]
+        agent: "gemini-2.0-flash-thinking-exp-1219"
+        api: []
+  src:
+    haconiwa:
+      __init__.py:
+        content: |-
+          Python製 haconiwa パッケージ初期化ファイル
+          - パッケージバージョン情報の定義
+          - 主要クラス・関数のエクスポート
+          - Pythonパッケージとしての初期化処理
+          - ログ設定の初期化
+          - 依存関係チェック
+          - 設定ファイルのデフォルト値設定
+        agent選定理由: |-
+          claude-3-5-sonnet-20241022は、Pythonパッケージの初期化ファイル作成に適しており、
+          適切なエクスポート設計とバージョン管理を実装できるため選択しました。
+        api選定理由: |-
+          Python初期化ファイルのため外部APIは使用しません。
+        dependency: []
+        agent: "claude-3-5-sonnet-20241022"
+        api: []
+      cli.py:
+        content: |-
+          Python製 haconiwa メインCLI エントリーポイント
+          - Typer フレームワークを使用したPythonCLI実装
+          - 7つのコマンドグループ統合（core/world/space/resource/agent/task/watch）
+          - グローバルオプション（--verbose, --config等）の処理
+          - エラーハンドリングと例外処理
+          - ヘルプシステムとバージョン表示
+          - ロギング設定とデバッグモード
+          - 設定ファイル読み込みとバリデーション
+          - Pythonエントリーポイントとしての機能
+        agent選定理由: |-
+          claude-3-5-sonnet-20241022は、TyperフレームワークによるPython CLIアプリケーションの
+          実装に優れており、複数サブコマンドの統合管理を効率的に実装できるため選択しました。
+        api選定理由: |-
+          CLIエントリーポイントのため外部APIは使用しません。
+        dependency: ["src/haconiwa/core/cli.py", "src/haconiwa/world/cli.py", "src/haconiwa/space/cli.py", "src/haconiwa/resource/cli.py", "src/haconiwa/agent/cli.py", "src/haconiwa/task/cli.py", "src/haconiwa/watch/cli.py"]
+        agent: "claude-3-5-sonnet-20241022"
+        api: []
+      core:
+        __init__.py:
+          content: |-
+            Python製 haconiwa core モジュール初期化ファイル
+            - coreモジュールの初期化処理
+            - 設定管理・状態管理クラスのエクスポート
+            - Pythonモジュールとしての初期化
+            - 内部依存関係の解決
+          agent選定理由: |-
+            gpt-4o-miniは、Pythonモジュール初期化ファイルの作成に適しており、
+            シンプルで効率的な構造を提供できるため選択しました。
+          api選定理由: |-
+            Python初期化ファイルのため外部APIは使用しません。
+          dependency: []
+          agent: "gpt-4o-mini"
+          api: []
+        config.py:
+          content: |-
+            Python製 haconiwa 設定管理モジュール
+            - YAML設定ファイルの読み込み・書き込み（Pythonライブラリ使用）
+            - 環境変数からの設定値取得
+            - 設定値のバリデーションとデフォルト値
+            - 動的設定変更とホットリロード
+            - 設定階層の管理（グローバル・組織・個別）
+            - セキュリティ設定（暗号化・アクセス制御）
+            - Pythonのpydantic等を活用した型安全な設定管理
+          agent選定理由: |-
+            claude-3-5-sonnet-20241022は、Python設定管理システムの実装に優れており、
+            YAML処理とバリデーション機能を適切に実装できるため選択しました。
+          api選定理由: |-
+            設定管理モジュールのため外部APIは使用しません。
+          dependency: []
+          agent: "claude-3-5-sonnet-20241022"
+          api: []
+        state.py:
+          content: |-
+            Python製 haconiwa 状態管理モジュール
+            - アプリケーション状態の永続化（Pythonのpickle/json使用）
+            - world・space・agent・taskの状態追跡
+            - 状態変更の履歴管理とロールバック
+            - 分散状態の同期機能
+            - 状態整合性チェックとリペア
+            - メモリ・ディスク状態の最適化
+            - Pythonの並行処理対応（threading/asyncio）
+          agent選定理由: |-
+            gpt-4o は、複雑な状態管理ロジックとデータ永続化の実装に優れており、
+            Pythonの並行処理を活用した安全な状態管理を構築できるため選択しました。
+          api選定理由: |-
+            状態管理モジュールのため外部APIは使用しません。
+          dependency: ["src/haconiwa/core/config.py"]
+          agent: "gpt-4o"
+          api: []
+        logging.py:
+          content: |-
+            Python製 haconiwa ログ管理モジュール
+            - Pythonのloggingライブラリを基盤としたログシステム
+            - 構造化ログ（JSON形式）の出力
+            - ログレベル管理（DEBUG/INFO/WARNING/ERROR/CRITICAL）
+            - ローテーション・アーカイブ機能
+            - 分散ログ収集・集約
+            - エラートラッキングとアラート連携
+            - パフォーマンスログとメトリクス
+          agent選定理由: |-
+            claude-3-5-sonnet-20241022は、Pythonログシステムの実装に精通しており、
+            構造化ログと運用監視を考慮したログ機能を適切に実装できるため選択しました。
+          api選定理由: |-
+            ログ管理モジュールのため外部APIは使用しません。
+          dependency: ["src/haconiwa/core/config.py"]
+          agent: "claude-3-5-sonnet-20241022"
+          api: []
+        upgrade.py:
+          content: |-
+            Python製 haconiwa アップグレード管理モジュール
+            - バージョン管理と互換性チェック（Pythonのpackaging使用）
+            - 設定ファイル・データベースのマイグレーション
+            - 段階的アップグレードとロールバック
+            - 依存関係の更新処理
+            - バックアップ・リストア機能
+            - アップグレード前後の検証
+            - Pythonパッケージ管理との統合
+          agent選定理由: |-
+            gpt-4o は、Pythonパッケージ管理とマイグレーション処理の実装に優れており、
+            安全で確実なアップグレード機能を構築できるため選択しました。
+          api選定理由: |-
+            アップグレード管理モジュールのため外部APIは使用しません。
+          dependency: ["src/haconiwa/core/config.py", "src/haconiwa/core/state.py"]
+          agent: "gpt-4o"
+          api: []
+        cli.py:
+          content: |-
+            Python製 haconiwa core CLI サブコマンド実装
+            - Typer フレームワークを使用したPythonCLI実装
+            - core グループのサブコマンド実装（init/status/reset/upgrade）
+            - 初期化処理とプロジェクト雛形生成
+            - 全体状況の表示とレポート
+            - システムリセットと清理機能
+            - アップグレード実行とバージョン管理
+            - エラーハンドリングと進捗表示
+          agent選定理由: |-
+            claude-3-5-sonnet-20241022は、TyperベースのPython CLIサブコマンド実装に適しており、
+            ユーザーフレンドリーなインターフェースを構築できるため選択しました。
+          api選定理由: |-
+            CLIサブコマンド実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/core/config.py", "src/haconiwa/core/state.py", "src/haconiwa/core/upgrade.py"]
+          agent: "claude-3-5-sonnet-20241022"
+          api: []
+      world:
+        __init__.py:
+          content: |-
+            Python製 haconiwa world モジュール初期化ファイル
+            - worldモジュールの初期化処理
+            - プロバイダークラスのエクスポート
+            - Pythonモジュールとしての初期化
+            - 仮想環境プロバイダーの登録
+          agent選定理由: |-
+            gpt-4o-miniは、Pythonモジュール初期化ファイルの作成に適しており、
+            シンプルで効率的な構造を提供できるため選択しました。
+          api選定理由: |-
+            Python初期化ファイルのため外部APIは使用しません。
+          dependency: []
+          agent: "gpt-4o-mini"
+          api: []
+        cli.py:
+          content: |-
+            Python製 haconiwa world CLI サブコマンド実装
+            - Typer フレームワークを使用したPythonCLI実装
+            - world グループのサブコマンド実装（create/list/enter/destroy）
+            - 仮想環境・VM・コンテナの作成管理
+            - 環境一覧表示とステータス確認
+            - 環境への接続・シェル実行
+            - 環境破棄と清理処理
+            - プロバイダー切り替えとオプション管理
+          agent選定理由: |-
+            gpt-4o は、インフラストラクチャ管理とPython CLIの実装に優れており、
+            仮想環境の操作機能を適切に構築できるため選択しました。
+          api選定理由: |-
+            CLIサブコマンド実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/world/provider/local.py", "src/haconiwa/world/provider/docker.py"]
+          agent: "gpt-4o"
+          api: []
+        provider:
+          __init__.py:
+            content: |-
+              Python製 haconiwa world provider モジュール初期化ファイル
+              - providerモジュールの初期化処理
+              - 各プロバイダークラスのエクスポート
+              - Pythonモジュールとしての初期化
+              - プロバイダー登録システム
+            agent選定理由: |-
+              gpt-4o-miniは、Pythonモジュール初期化ファイルの作成に適しており、
+              シンプルで効率的な構造を提供できるため選択しました。
+            api選定理由: |-
+              Python初期化ファイルのため外部APIは使用しません。
+            dependency: []
+            agent: "gpt-4o-mini"
+            api: []
+          local.py:
+            content: |-
+              Python製 haconiwa ローカル環境プロバイダー実装
+              - ローカルマシン上での開発環境管理（Python実装）
+              - プロセス分離・ファイルシステム分離
+              - 環境変数管理とパス設定
+              - ローカルネットワーク設定
+              - リソース制限と監視
+              - セキュリティ・権限管理
+              - バックアップ・スナップショット機能
+              - Pythonのsubprocess・os・pathlib活用
+            agent選定理由: |-
+              claude-3-5-sonnet-20241022は、Pythonシステムプログラミングに優れており、
+              ローカル環境管理の複雑な処理を適切に実装できるため選択しました。
+            api選定理由: |-
+              ローカル環境プロバイダーのため外部APIは使用しません。
+            dependency: ["src/haconiwa/core/config.py"]
+            agent: "claude-3-5-sonnet-20241022"
+            api: []
+          docker.py:
+            content: |-
+              Python製 haconiwa Docker環境プロバイダー実装
+              - Docker コンテナでの分離環境管理（Python実装）
+              - コンテナ作成・起動・停止・削除
+              - イメージ管理とDockerfileビルド
+              - ボリューム・ネットワーク設定
+              - コンテナ間通信と連携
+              - リソース制限とヘルスチェック
+              - ログ管理とデバッグ機能
+              - Pythonのdockerライブラリ活用
+            agent選定理由: |-
+              gpt-4o は、Docker操作とコンテナ管理のPython実装に精通しており、
+              安全で効率的なコンテナプロバイダーを構築できるため選択しました。
+            api選定理由: |-
+              Docker環境プロバイダーのため外部APIは使用しません。
+            dependency: ["src/haconiwa/core/config.py"]
+            agent: "gpt-4o"
+            api: []
+      space:
+        __init__.py:
+          content: |-
+            Python製 haconiwa space モジュール初期化ファイル
+            - spaceモジュールの初期化処理
+            - tmux管理クラスのエクスポート
+            - Pythonモジュールとしての初期化
+            - セッション管理機能の提供
+          agent選定理由: |-
+            gpt-4o-miniは、Pythonモジュール初期化ファイルの作成に適しており、
+            シンプルで効率的な構造を提供できるため選択しました。
+          api選定理由: |-
+            Python初期化ファイルのため外部APIは使用しません。
+          dependency: []
+          agent: "gpt-4o-mini"
+          api: []
+        cli.py:
+          content: |-
+            Python製 haconiwa space CLI サブコマンド実装
+            - Typer フレームワークを使用したPythonCLI実装
+            - space グループのサブコマンド実装（create/attach/resize/kill/list）
+            - tmuxセッション作成と区画設定
+            - 既存セッションへのアタッチ
+            - レイアウト変更・ペインリサイズ
+            - セッション終了と清理
+            - アクティブセッション一覧表示
+          agent選定理由: |-
+            claude-3-5-sonnet-20241022は、外部プロセス連携を伴うPython CLI実装に適しており、
+            tmux操作のインターフェースを適切に構築できるため選択しました。
+          api選定理由: |-
+            CLIサブコマンド実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/space/tmux.py"]
+          agent: "claude-3-5-sonnet-20241022"
+          api: []
+        tmux.py:
+          content: |-
+            Python製 haconiwa tmux セッション管理モジュール
+            - tmux セッション・ウィンドウ・ペインの操作（Python実装）
+            - セッション作成・削除・一覧取得
+            - レイアウト設定とペイン分割
+            - コマンド送信とレスポンス取得
+            - セッション状態の監視・復旧
+            - 設定ファイル管理とカスタマイズ
+            - エラーハンドリングと例外処理
+            - Pythonのsubprocess・libtmux活用
+          agent選定理由: |-
+            claude-3-5-sonnet-20241022は、外部プロセス連携とPythonでのtmux操作に優れており、
+            安定したセッション管理機能を実装できるため選択しました。
+          api選定理由: |-
+            tmux管理モジュールのため外部APIは使用しません。
+          dependency: ["src/haconiwa/core/config.py"]
+          agent: "claude-3-5-sonnet-20241022"
+          api: []
+      resource:
+        __init__.py:
+          content: |-
+            Python製 haconiwa resource モジュール初期化ファイル
+            - resourceモジュールの初期化処理
+            - リソース管理クラスのエクスポート
+            - Pythonモジュールとしての初期化
+            - ファイル・DB管理機能の提供
+          agent選定理由: |-
+            gpt-4o-miniは、Pythonモジュール初期化ファイルの作成に適しており、
+            シンプルで効率的な構造を提供できるため選択しました。
+          api選定理由: |-
+            Python初期化ファイルのため外部APIは使用しません。
+          dependency: []
+          agent: "gpt-4o-mini"
+          api: []
+        cli.py:
+          content: |-
+            Python製 haconiwa resource CLI サブコマンド実装
+            - Typer フレームワークを使用したPythonCLI実装
+            - resource グループのサブコマンド実装（scan/pull/sync）
+            - ファイルパススキャンと拡張子フィルタ
+            - データベースクエリ実行とデータ取得
+            - リモートストレージ同期（S3/GCS等）
+            - 結果のフォーマット・エクスポート
+            - 進捗表示とエラーハンドリング
+          agent選定理由: |-
+            gpt-4o は、データベース操作とファイルシステム処理のCLI実装に優れており、
+            リソース管理機能を効率的に構築できるため選択しました。
+          api選定理由: |-
+            CLIサブコマンド実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/resource/path_scanner.py", "src/haconiwa/resource/db_fetcher.py"]
+          agent: "gpt-4o"
+          api: []
+        path_scanner.py:
+          content: |-
+            Python製 haconiwa ファイルパススキャナー モジュール
+            - ディレクトリトラバースとファイル検索（Python実装）
+            - 拡張子・パターンマッチングによるフィルタリング
+            - 大容量ディレクトリの効率的スキャン
+            - メタデータ取得（サイズ・日時・権限）
+            - 除外パターンと.gitignore連携
+            - 並列スキャンとパフォーマンス最適化
+            - 結果のキャッシュと差分検出
+            - Pythonのpathlib・os・glob活用
+          agent選定理由: |-
+            claude-3-5-sonnet-20241022は、Pythonファイルシステム操作とパターンマッチングに優れており、
+            効率的なファイルスキャン機能を実装できるため選択しました。
+          api選定理由: |-
+            ファイルスキャナーモジュールのため外部APIは使用しません。
+          dependency: ["src/haconiwa/core/config.py"]
+          agent: "claude-3-5-sonnet-20241022"
+          api: []
+        db_fetcher.py:
+          content: |-
+            Python製 haconiwa データベースフェッチャー モジュール
+            - 複数DBエンジン対応（SQLite・PostgreSQL・MySQL等）（Python実装）
+            - DSN接続管理とコネクションプール
+            - SQLクエリ実行と結果取得
+            - バッチ処理と大容量データ対応
+            - エラーハンドリングと再試行機能
+            - 結果のフォーマット変換（JSON・CSV・YAML）
+            - セキュリティ（SQLインジェクション対策）
+            - Pythonのsqlalchemy・psycopg2・pymysql活用
+          agent選定理由: |-
+            gpt-4o は、データベース操作と複数DB対応のPython実装に精通しており、
+            安全で効率的なデータベースアクセス機能を構築できるため選択しました。
+          api選定理由: |-
+            データベースフェッチャーモジュールのため外部APIは使用しません。
+          dependency: ["src/haconiwa/core/config.py"]
+          agent: "gpt-4o"
+          api: []
+      agent:
+        __init__.py:
+          content: |-
+            Python製 haconiwa agent モジュール初期化ファイル
+            - agentモジュールの初期化処理
+            - AIエージェントクラスのエクスポート
+            - Pythonモジュールとしての初期化
+            - エージェント管理機能の提供
+          agent選定理由: |-
+            gpt-4o-miniは、Pythonモジュール初期化ファイルの作成に適しており、
+            シンプルで効率的な構造を提供できるため選択しました。
+          api選定理由: |-
+            Python初期化ファイルのため外部APIは使用しません。
+          dependency: []
+          agent: "gpt-4o-mini"
+          api: []
+        cli.py:
+          content: |-
+            Python製 haconiwa agent CLI サブコマンド実装
+            - Typer フレームワークを使用したPythonCLI実装
+            - agent グループのサブコマンド実装（spawn/ps/stop/logs/shell）
+            - エージェント起動と設定管理
+            - 実行中エージェント一覧表示
+            - エージェント停止と強制終了
+            - ログ表示とリアルタイム監視
+            - エージェントシェル・デバッグモード
+          agent選定理由: |-
+            gemini-2.0-flash-exp は、AIエージェント管理のCLI実装に優れており、
+            複雑なエージェント操作をPythonで効率的に構築できるため選択しました。
+          api選定理由: |-
+            CLIサブコマンド実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/agent/base.py", "src/haconiwa/agent/boss.py", "src/haconiwa/agent/worker.py", "src/haconiwa/agent/manager.py"]
+          agent: "gemini-2.0-flash-exp"
+          api: []
+        base.py:
+          content: |-
+            Python製 haconiwa ベースエージェント クラス実装
+            - 全エージェントの基底クラス（Python実装）
+            - 共通インターフェースとライフサイクル管理
+            - 設定読み込み・ログ・状態管理
+            - 通信プロトコルとメッセージング
+            - エラーハンドリングと例外処理
+            - 拡張ポイントとプラグインシステム
+            - パフォーマンス監視とメトリクス
+            - Pythonのabc・asyncio・threading活用
+          agent選定理由: |-
+            claude-3-5-sonnet-20241022は、Python抽象基底クラスの設計に優れており、
+            エージェントアーキテクチャの基盤を適切に実装できるため選択しました。
+          api選定理由: |-
+            ベースエージェント実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/core/config.py", "src/haconiwa/core/logging.py"]
+          agent: "claude-3-5-sonnet-20241022"
+          api: []
+        boss.py:
+          content: |-
+            Python製 haconiwa Boss エージェント クラス実装
+            - タスク分解・計画・割り当て機能（Python実装）
+            - Worker監視と進捗管理
+            - 意思決定エンジンと学習機能
+            - 品質管理とレビューシステム
+            - リソース最適化とスケジューリング
+            - エラー対応と復旧戦略
+            - レポート生成と可視化
+            - Pythonの機械学習ライブラリ活用（scikit-learn等）
+          agent選定理由: |-
+            gemini-2.0-flash-exp は、AIエージェントの複雑な意思決定ロジックとマネジメント機能の
+            Python実装に優れており、効率的なBossエージェントを構築できるため選択しました。
+          api選定理由: |-
+            Bossエージェント実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/agent/base.py"]
+          agent: "gemini-2.0-flash-exp"
+          api: []
+        worker.py:
+          content: |-
+            Python製 haconiwa Worker エージェント クラス実装
+            - 実作業実行とタスク処理（Python実装）
+            - 専門分野別の実装（フロントエンド・バックエンド・QA）
+            - Boss指示の受信と結果報告
+            - 学習・スキルアップ機能
+            - エラー処理と品質管理
+            - 並行作業と協調機能
+            - パフォーマンス最適化
+            - Pythonの専門ライブラリ活用（開発分野別）
+          agent選定理由: |-
+            claude-3-5-sonnet-20241022は、多様な開発タスクを扱うWorkerエージェントの
+            Python実装に適しており、柔軟で拡張性の高い設計を構築できるため選択しました。
+          api選定理由: |-
+            Workerエージェント実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/agent/base.py"]
+          agent: "claude-3-5-sonnet-20241022"
+          api: []
+        manager.py:
+          content: |-
+            Python製 haconiwa Manager エージェント クラス実装
+            - エージェント間調整・仲裁機能（Python実装）
+            - リソース配分と競合解決
+            - 全体最適化とボトルネック解消
+            - コミュニケーション促進
+            - 品質保証と基準管理
+            - プロセス改善と効率化
+            - 障害対応とインシデント管理
+            - Pythonの分散処理・協調制御活用
+          agent選定理由: |-
+            gpt-4o は、複雑な調整機能と全体最適化のPython実装に優れており、
+            Managerエージェントの高度な管理機能を適切に構築できるため選択しました。
+          api選定理由: |-
+            Managerエージェント実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/agent/base.py"]
+          agent: "gpt-4o"
+          api: []
+      task:
+        __init__.py:
+          content: |-
+            Python製 haconiwa task モジュール初期化ファイル
+            - taskモジュールの初期化処理
+            - タスク管理クラスのエクスポート
+            - Pythonモジュールとしての初期化
+            - git-worktree連携機能の提供
+          agent選定理由: |-
+            gpt-4o-miniは、Pythonモジュール初期化ファイルの作成に適しており、
+            シンプルで効率的な構造を提供できるため選択しました。
+          api選定理由: |-
+            Python初期化ファイルのため外部APIは使用しません。
+          dependency: []
+          agent: "gpt-4o-mini"
+          api: []
+        cli.py:
+          content: |-
+            Python製 haconiwa task CLI サブコマンド実装
+            - Typer フレームワークを使用したPythonCLI実装
+            - task グループのサブコマンド実装（new/assign/show/done/prune）
+            - 新規タスク作成とworktree設定
+            - エージェントへのタスク割り当て
+            - 進捗状況表示と可視化
+            - タスク完了処理とworktree清理
+            - 孤児worktreeの検出と削除
+          agent選定理由: |-
+            claude-3-5-sonnet-20241022は、git操作とタスク管理のCLI実装に適しており、
+            ワークフロー管理機能を効率的に構築できるため選択しました。
+          api選定理由: |-
+            CLIサブコマンド実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/task/worktree.py"]
+          agent: "claude-3-5-sonnet-20241022"
+          api: []
+        worktree.py:
+          content: |-
+            Python製 haconiwa git-worktree 管理モジュール
+            - git worktree 作成・削除・管理（Python実装）
+            - ブランチ作成・切り替え・マージ
+            - コミット・プッシュ・プルリクエスト操作
+            - 競合解決とマージ戦略
+            - worktree状態の監視・検証
+            - バックアップ・復旧機能
+            - 並行開発の調整・同期
+            - Pythonのgitpython・dulwich活用
+          agent選定理由: |-
+            claude-3-5-sonnet-20241022は、git操作とバージョン管理のPython実装に優れており、
+            複雑なworktree管理機能を適切に構築できるため選択しました。
+          api選定理由: |-
+            git-worktree管理モジュールのため外部APIは使用しません。
+          dependency: ["src/haconiwa/core/config.py"]
+          agent: "claude-3-5-sonnet-20241022"
+          api: []
+      watch:
+        __init__.py:
+          content: |-
+            Python製 haconiwa watch モジュール初期化ファイル
+            - watchモジュールの初期化処理
+            - 監視システムクラスのエクスポート
+            - Pythonモジュールとしての初期化
+            - メトリクス・アラート機能の提供
+          agent選定理由: |-
+            gpt-4o-miniは、Pythonモジュール初期化ファイルの作成に適しており、
+            シンプルで効率的な構造を提供できるため選択しました。
+          api選定理由: |-
+            Python初期化ファイルのため外部APIは使用しません。
+          dependency: []
+          agent: "gpt-4o-mini"
+          api: []
+        cli.py:
+          content: |-
+            Python製 haconiwa watch CLI サブコマンド実装
+            - Typer フレームワークを使用したPythonCLI実装
+            - watch グループのサブコマンド実装（start/stop/tail/health）
+            - 監視デーモンの起動・停止
+            - リアルタイムメトリクス表示
+            - ヘルスチェックと診断機能
+            - アラート設定と通知管理
+            - ダッシュボード表示とレポート
+          agent選定理由: |-
+            gpt-4o は、監視システムとリアルタイム処理のCLI実装に優れており、
+            効率的な監視インターフェースを構築できるため選択しました。
+          api選定理由: |-
+            CLIサブコマンド実装のため外部APIは使用しません。
+          dependency: ["src/haconiwa/watch/monitor.py"]
+          agent: "gpt-4o"
+          api: []
+        monitor.py:
+          content: |-
+            Python製 haconiwa 監視・メトリクス モジュール
+            - システム監視とメトリクス収集（Python実装）
+            - Prometheus互換メトリクス出力
+            - アラート条件とトリガー管理
+            - ダッシュボード生成と可視化
+            - ログ分析と異常検知
+            - パフォーマンスベンチマークと比較
+            - 通知システム（Slack・メール等）連携
+            - Pythonのprometheus_client・psutil・matplotlib活用
+          agent選定理由: |-
+            gpt-4o は、監視システムとメトリクス処理のPython実装に精通しており、
+            包括的な監視機能を適切に構築できるため選択しました。
+          api選定理由: |-
+            監視・メトリクスモジュールのため外部APIは使用しません。
+          dependency: ["src/haconiwa/core/config.py", "src/haconiwa/core/logging.py"]
+          agent: "gpt-4o"
+          api: []
+      utils:
+        __init__.py:
+          content: |-
+            Python製 haconiwa utils モジュール初期化ファイル
+            - utilsモジュールの初期化処理
+            - 共通ユーティリティクラスのエクスポート
+            - Pythonモジュールとしての初期化
+            - ヘルパー機能の提供
+          agent選定理由: |-
+            gpt-4o-miniは、Pythonモジュール初期化ファイルの作成に適しており、
+            シンプルで効率的な構造を提供できるため選択しました。
+          api選定理由: |-
+            Python初期化ファイルのため外部APIは使用しません。
+          dependency: []
+          agent: "gpt-4o-mini"
+          api: []
+        typer_ext.py:
+          content: |-
+            Python製 haconiwa Typer 拡張ユーティリティ モジュール
+            - Typer フレームワーク拡張機能（Python実装）
+            - 共通オプション・引数の定義
+            - カスタムコマンドデコレータ
+            - エラーハンドリング・例外処理統一
+            - 進捗表示・プログレスバー機能
+            - カラー出力・フォーマット機能
+            - 設定値バリデーション・型変換
+            - Pythonのtyper・rich・click活用
+          agent選定理由: |-
+            claude-3-5-sonnet-20241022は、TyperフレームワークとCLI拡張のPython実装に優れており、
+            再利用可能なユーティリティ機能を効率的に構築できるため選択しました。
+          api選定理由: |-
+            Typer拡張ユーティリティのため外部APIは使用しません。
+          dependency: []
+          agent: "claude-3-5-sonnet-20241022"
+          api: []
