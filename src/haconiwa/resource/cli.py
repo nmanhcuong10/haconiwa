@@ -2,7 +2,7 @@ import typer
 from haconiwa.resource.path_scanner import PathScanner
 from haconiwa.resource.db_fetcher import DBFetcher
 
-resource_app = typer.Typer()
+resource_app = typer.Typer(help="リソース管理 (開発中)")
 
 @resource_app.command()
 def scan(directory: str, extension: str = ""):

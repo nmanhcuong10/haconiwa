@@ -9,7 +9,7 @@ from ..task.worktree import WorktreeManager
 from ..core.config import Config
 from ..core.logging import get_logger
 
-task_app = typer.Typer(help="Task management commands")
+task_app = typer.Typer(help="タスク管理コマンド (開発中)")
 console = Console()
 logger = get_logger(__name__)
 

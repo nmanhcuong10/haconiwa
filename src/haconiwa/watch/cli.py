@@ -1,7 +1,7 @@
 import typer
 from haconiwa.watch.monitor import Monitor
 
-watch_app = typer.Typer()
+watch_app = typer.Typer(help="監視・モニタリング (開発中)")
 
 @watch_app.command()
 def start():

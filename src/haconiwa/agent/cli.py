@@ -11,7 +11,7 @@ from haconiwa.agent.manager import ManagerAgent
 from haconiwa.core.config import Config
 
 console = Console()
-agent_app = typer.Typer(help="Agent management commands")
+agent_app = typer.Typer(help="エージェント管理コマンド (開発中)")
 
 @agent_app.command()
 def spawn(

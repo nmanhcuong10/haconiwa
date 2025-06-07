@@ -8,7 +8,7 @@ except ImportError:
     DockerProvider = None
     DOCKER_AVAILABLE = False
 
-world_app = typer.Typer()
+world_app = typer.Typer(help="ワールド・環境管理 (開発中)")
 
 providers = {
     "local": LocalProvider

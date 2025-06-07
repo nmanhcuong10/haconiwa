@@ -7,7 +7,7 @@ from ..core.config import Config
 from ..core.logging import get_logger
 
 logger = get_logger(__name__)
-space_app = typer.Typer(help="Manage tmux spaces and sessions")
+space_app = typer.Typer(help="tmuxスペース・セッション管理 (開発中)")
 
 @space_app.command()
 def create(

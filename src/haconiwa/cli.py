@@ -14,7 +14,7 @@ from haconiwa.watch.cli import watch_app
 
 app = typer.Typer(
     name="haconiwa",
-    help="AI協調開発支援Python CLIツール",
+    help="AI協調開発支援Python CLIツール (開発中)",
     no_args_is_help=True
 )
 
@@ -37,7 +37,7 @@ def main(
     config: Optional[Path] = typer.Option(None, "--config", "-c", help="設定ファイルのパス"),
     version: bool = typer.Option(False, "--version", callback=version_callback, help="バージョン情報を表示"),
 ):
-    """箱庭 (haconiwa) - AI協調開発支援ツール"""
+    """箱庭 (haconiwa) - AI協調開発支援ツール (開発中)"""
     setup_logging(verbose)
     if config:
         try:

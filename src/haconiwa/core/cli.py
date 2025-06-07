@@ -9,7 +9,7 @@ from haconiwa.core.config import Config
 from haconiwa.core.state import StateManager
 from haconiwa.core.upgrade import Upgrader
 
-core_app = typer.Typer(help="Core management commands")
+core_app = typer.Typer(help="コア管理コマンド (開発中)")
 console = Console()
 
 @core_app.command()
