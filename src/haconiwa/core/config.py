@@ -52,10 +52,13 @@ class Config:
             )
 
     def _setup_hot_reload(self) -> None:
+        config_path = self.config_path
+        load_config = self._load_config
+        
         class ConfigFileHandler(FileSystemEventHandler):
             def on_modified(self, event):
-                if event.src_path == str(self.config_path):
-                    self._load_config()
+                if event.src_path == str(config_path):
+                    load_config()
 
         self._observer = Observer()
         self._observer.schedule(

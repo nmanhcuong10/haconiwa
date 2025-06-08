@@ -24,6 +24,15 @@ echo "📝 Updating README files with latest version"
 sed -i '' "s/最新バージョン**: .*/最新バージョン**: $VERSION/" README_JA.md
 sed -i '' "s/Latest Version**: .*/Latest Version**: $VERSION/" README.md
 
+# Run pre-release checks
+echo "🧪 Running pre-release checks..."
+if command -v haconiwa-prerelease >/dev/null 2>&1; then
+    haconiwa-prerelease
+else
+    echo "⚠️ haconiwa-prerelease not found, running basic tests..."
+    python -m pytest tests/ -v
+fi
+
 # Build package
 echo "📦 Building package"
 rm -rf dist/ build/ src/*.egg-info
