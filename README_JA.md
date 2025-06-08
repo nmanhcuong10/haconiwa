@@ -11,6 +11,45 @@
 
 [🇺🇸 English README](README.md)
 
+## 🚀 今すぐ使える機能
+
+### tmux マルチエージェント環境（実装済み）
+
+4x4グリッドのマルチエージェント開発環境を**今すぐ**作成・管理できます：
+
+```bash
+# 1. インストール
+pip install haconiwa
+
+# 2. マルチエージェント環境作成（4組織 × 4役割 = 16ペイン）
+haconiwa space multiagent --name my-project \
+  --org01-name "フロントエンド開発部" --task01 "UI設計" \
+  --org02-name "バックエンド開発部" --task02 "API開発" \
+  --org03-name "データベース部門" --task03 "スキーマ設計" \
+  --org04-name "DevOps部門" --task04 "インフラ構築"
+
+# 3. セッション一覧確認
+haconiwa space list
+
+# 4. 既存セッションに接続
+haconiwa space attach my-project
+
+# 5. セッション設定更新（既存セッションの名前変更）
+haconiwa space multiagent --name my-project \
+  --org01-name "新フロントエンド部" --task01 "React開発" \
+  --no-attach
+
+# 6. セッション終了
+haconiwa space kill my-project
+```
+
+**✅ 実際に動作する機能:**
+- 🏢 **マルチエージェント環境**: 4x4（16ペイン）の組織的tmuxレイアウト
+- 📁 **自動ディレクトリ構成**: 組織・役割別ワークスペース自動作成
+- 🏷️ **カスタム組織名・タスク名**: 動的なタイトル設定
+- 🔄 **セッション更新**: 既存セッションの安全な設定変更
+- 📋 **セッション管理**: 作成・一覧・接続・削除の完全サポート
+
 ## ✨ 主な機能 (開発中)
 
 - 🤖 **AIエージェント管理**: Boss/Workerエージェントの作成・監視

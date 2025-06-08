@@ -11,6 +11,45 @@
 
 [🇯🇵 日本語版 README](README_JA.md)
 
+## 🚀 Ready-to-Use Features
+
+### tmux Multi-Agent Environment (Implemented)
+
+Create and manage a 4x4 grid multi-agent development environment **right now**:
+
+```bash
+# 1. Installation
+pip install haconiwa
+
+# 2. Create multi-agent environment (4 organizations × 4 roles = 16 panes)
+haconiwa space multiagent --name my-project \
+  --org01-name "Frontend Development" --task01 "UI Design" \
+  --org02-name "Backend Development" --task02 "API Development" \
+  --org03-name "Database Team" --task03 "Schema Design" \
+  --org04-name "DevOps Team" --task04 "Infrastructure"
+
+# 3. List sessions
+haconiwa space list
+
+# 4. Attach to existing session
+haconiwa space attach my-project
+
+# 5. Update session settings (rename existing session)
+haconiwa space multiagent --name my-project \
+  --org01-name "New Frontend Team" --task01 "React Development" \
+  --no-attach
+
+# 6. Terminate session
+haconiwa space kill my-project
+```
+
+**✅ Actually Working Features:**
+- 🏢 **Multi-Agent Environment**: 4x4 (16 panes) organizational tmux layout
+- 📁 **Auto Directory Structure**: Automatic workspace creation by organization/role
+- 🏷️ **Custom Organization & Task Names**: Dynamic title configuration
+- 🔄 **Session Updates**: Safe configuration changes for existing sessions
+- 📋 **Session Management**: Complete support for create/list/attach/delete
+
 ## ✨ Key Features (In Development)
 
 - 🤖 **AI Agent Management**: Create and monitor Boss/Worker agents
