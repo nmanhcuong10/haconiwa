@@ -1,6 +1,7 @@
 import typer
 from typing import Optional, List
 from pathlib import Path
+import subprocess
 
 from ..space.tmux import TmuxSession
 from ..core.config import Config
@@ -30,10 +31,14 @@ def create(
 def multiagent(
     name: str = typer.Option("multiagent", "--name", "-n", help="Session name"),
     base_path: str = typer.Option(".", "--base-path", "-p", help="Base path for workspaces"),
-    org01_name: str = typer.Option("動画モデル", "--org01", help="Organization 1 name"),
-    org02_name: str = typer.Option("リップシンク", "--org02", help="Organization 2 name"),
-    org03_name: str = typer.Option("YAML拡張", "--org03", help="Organization 3 name"),
-    org04_name: str = typer.Option("エージェント文書検索", "--org04", help="Organization 4 name"),
+    org01_name: str = typer.Option("", "--org01-name", help="Organization 1 name (optional)"),
+    org02_name: str = typer.Option("", "--org02-name", help="Organization 2 name (optional)"),
+    org03_name: str = typer.Option("", "--org03-name", help="Organization 3 name (optional)"),
+    org04_name: str = typer.Option("", "--org04-name", help="Organization 4 name (optional)"),
+    task01_name: str = typer.Option("", "--task01", help="Task name for organization 1 (optional)"),
+    task02_name: str = typer.Option("", "--task02", help="Task name for organization 2 (optional)"),
+    task03_name: str = typer.Option("", "--task03", help="Task name for organization 3 (optional)"),
+    task04_name: str = typer.Option("", "--task04", help="Task name for organization 4 (optional)"),
     org01_workspace: str = typer.Option("video-model-workspace", "--ws01", help="Organization 1 workspace"),
     org02_workspace: str = typer.Option("lipsync-workspace", "--ws02", help="Organization 2 workspace"),
     org03_workspace: str = typer.Option("yaml-enhancement-workspace", "--ws03", help="Organization 3 workspace"),
@@ -47,10 +52,10 @@ def multiagent(
     
     # Custom organizations configuration
     organizations = [
-        {"id": "org-01", "name": org01_name, "workspace": org01_workspace},
-        {"id": "org-02", "name": org02_name, "workspace": org02_workspace},
-        {"id": "org-03", "name": org03_name, "workspace": org03_workspace},
-        {"id": "org-04", "name": org04_name, "workspace": org04_workspace}
+        {"id": "org-01", "org_name": org01_name, "task_name": task01_name, "workspace": org01_workspace},
+        {"id": "org-02", "org_name": org02_name, "task_name": task02_name, "workspace": org02_workspace},
+        {"id": "org-03", "org_name": org03_name, "task_name": task03_name, "workspace": org03_workspace},
+        {"id": "org-04", "org_name": org04_name, "task_name": task04_name, "workspace": org04_workspace}
     ]
     
     try:
@@ -58,7 +63,9 @@ def multiagent(
         typer.echo(f"📁 Base path: {base_path}")
         typer.echo("🏢 Organizations:")
         for i, org in enumerate(organizations, 1):
-            typer.echo(f"   {i}. {org['id'].upper()}: {org['name']} ({org['workspace']})")
+            org_display = f"{org['org_name']}" if org['org_name'] else f"{org['id'].upper()}"
+            task_display = f" - {org['task_name']}" if org['task_name'] else ""
+            typer.echo(f"   {i}. {org_display}{task_display} ({org['workspace']})")
         
         session = tmux.create_multiagent_session(name, base_path, organizations)
         
@@ -86,19 +93,38 @@ def attach(
     readonly: bool = typer.Option(False, help="Attach in readonly mode"),
 ):
     """Attach to an existing tmux space"""
-    config = Config("config.yaml")
-    tmux = TmuxSession(config)
     try:
-        session = tmux.get_session(name)
-        if session:
+        # Check if session exists using tmux directly
+        result = subprocess.run(['tmux', 'has-session', '-t', name], 
+                              capture_output=True, check=False)
+        
+        if result.returncode == 0:
             typer.echo(f"🔗 Attaching to space '{name}'...")
-            # Attach to the tmux session (this will replace the current process)
-            tmux.attach_session(name)
+            # Attach using direct tmux command
+            if readonly:
+                subprocess.run(['tmux', 'attach-session', '-t', name, '-r'], check=True)
+            else:
+                subprocess.run(['tmux', 'attach-session', '-t', name], check=True)
         else:
             typer.echo(f"❌ Space '{name}' not found")
             typer.echo("💡 Tip: Use 'haconiwa space list' to see available spaces")
-    except Exception as e:
+            
+            # Show available sessions
+            list_result = subprocess.run(['tmux', 'list-sessions'], 
+                                       capture_output=True, text=True, check=False)
+            if list_result.returncode == 0 and list_result.stdout.strip():
+                typer.echo("\n📋 Available tmux sessions:")
+                for line in list_result.stdout.strip().split('\n'):
+                    session_name = line.split(':')[0]
+                    typer.echo(f"   📦 {session_name}")
+            else:
+                typer.echo("📭 No tmux sessions found")
+            
+    except subprocess.CalledProcessError as e:
         logger.error(f"Failed to attach to space: {e}")
+        raise typer.Exit(1)
+    except FileNotFoundError:
+        typer.echo("❌ tmux is not installed or not found in PATH")
         raise typer.Exit(1)
 
 @space_app.command()
@@ -144,28 +170,39 @@ def list_spaces(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show detailed information"),
 ):
     """List all active tmux spaces"""
-    config = Config("config.yaml")
-    tmux = TmuxSession(config)
     try:
-        sessions = tmux.list_sessions()
-        if not sessions:
+        # Get tmux sessions directly
+        result = subprocess.run(['tmux', 'list-sessions'], 
+                              capture_output=True, text=True, check=False)
+        
+        if result.returncode == 0 and result.stdout.strip():
+            typer.echo("📋 Active tmux spaces:")
+            
+            for line in result.stdout.strip().split('\n'):
+                parts = line.split(':')
+                if len(parts) >= 2:
+                    session_name = parts[0]
+                    session_info = parts[1].strip()
+                    
+                    # Check if attached
+                    attached = "(attached)" in line
+                    attached_icon = "🔗" if attached else "📦"
+                    
+                    if verbose:
+                        typer.echo(f"{attached_icon} Space: {session_name}")
+                        typer.echo(f"   📅 Info: {session_info}")
+                        typer.echo("   ---")
+                    else:
+                        typer.echo(f"   {attached_icon} {session_name}")
+        else:
             typer.echo("📭 No active spaces found")
             typer.echo("💡 Tip: Create a space with 'haconiwa space create <name>' or 'haconiwa space multiagent'")
-            return
-
-        typer.echo("📋 Active tmux spaces:")
-        for session in sessions:
-            if verbose:
-                typer.echo(f"📦 Space: {session['name']}")
-                typer.echo(f"   🪟 Windows: {session['windows']}")
-                typer.echo(f"   📅 Created: {session['created']}")
-                typer.echo(f"   🔗 Attached: {'Yes' if session['attached'] else 'No'}")
-                typer.echo("   ---")
-            else:
-                attached_icon = "🔗" if session['attached'] else "📦"
-                typer.echo(f"   {attached_icon} {session['name']} ({session['windows']} windows)")
-    except Exception as e:
+            
+    except subprocess.CalledProcessError as e:
         logger.error(f"Failed to list spaces: {e}")
+        raise typer.Exit(1)
+    except FileNotFoundError:
+        typer.echo("❌ tmux is not installed or not found in PATH")
         raise typer.Exit(1)
 
 if __name__ == "__main__":
