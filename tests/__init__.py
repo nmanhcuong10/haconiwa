@@ -2,9 +2,6 @@
 
 import pytest
 
-# 共通テストユーティリティのインポート
-from .utils import common_test_util
-
 # テスト設定の定義
 pytest_plugins = ["pytest_asyncio"]
 

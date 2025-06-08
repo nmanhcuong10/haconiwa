@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 📝 Missing `--base-path` parameter in usage examples
 - 🏷️ Inconsistent terminology between session and company
 
+
 ## [0.1.3] - 2025-01-06
 
 ### Added

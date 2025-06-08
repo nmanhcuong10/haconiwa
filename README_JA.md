@@ -31,37 +31,37 @@
 pip install haconiwa
 
 # 2. マルチエージェント環境作成（4組織 × 4役割 = 16ペイン）
-haconiwa space multiagent --name my-project \
-  --base-path /path/to/workspace \
+haconiwa company multiagent --name my-project \
+  --base-path /path/to/desks \
   --org01-name "フロントエンド開発部" --task01 "UI設計" \
   --org02-name "バックエンド開発部" --task02 "API開発" \
   --org03-name "データベース部門" --task03 "スキーマ設計" \
   --org04-name "DevOps部門" --task04 "インフラ構築"
 
 # 3. 会社一覧確認
-haconiwa space list
+haconiwa company list
 
 # 4. 既存の会社に接続
-haconiwa space attach my-project
+haconiwa company attach my-project
 
 # 5. 会社設定更新（既存会社の名前変更）
-haconiwa space multiagent --name my-project \
-  --base-path /path/to/workspace \
+haconiwa company multiagent --name my-project \
+  --base-path /path/to/desks \
   --org01-name "新フロントエンド部" --task01 "React開発" \
   --no-attach
 
 # 6. 会社終了
-haconiwa space kill my-project
+haconiwa company kill my-project
 ```
 
 **📁 自動作成されるディレクトリ構造:**
 ```
-/path/to/workspace/
+/path/to/desks/
 ├── org-01/
-│   ├── 01boss/          # PM用ワークスペース
-│   ├── 01worker-a/      # Worker-A用ワークスペース
-│   ├── 01worker-b/      # Worker-B用ワークスペース
-│   └── 01worker-c/      # Worker-C用ワークスペース
+│   ├── 01boss/          # PM用デスク
+│   ├── 01worker-a/      # Worker-A用デスク
+│   ├── 01worker-b/      # Worker-B用デスク
+│   └── 01worker-c/      # Worker-C用デスク
 ├── org-02/
 │   ├── 02boss/
 │   ├── 02worker-a/
@@ -73,11 +73,11 @@ haconiwa space kill my-project
 
 **✅ 実際に動作する機能:**
 - 🏢 **マルチエージェント環境**: 4x4（16ペイン）の組織的tmuxレイアウト
-- 📁 **自動ディレクトリ構成**: 組織・役割別ワークスペース自動作成
+- 🏗️ **自動ディレクトリ構成**: 組織・役割別デスク自動作成
 - 🏷️ **カスタム組織名・タスク名**: 動的なタイトル設定
 - 🔄 **会社更新**: 既存会社の安全な設定変更
-- 📋 **会社管理**: 作成・一覧・接続・削除の完全サポート
-- 📄 **README自動生成**: 各ディレクトリにREADME.md自動作成
+- 🏛️ **会社管理**: 作成・一覧・接続・削除の完全サポート
+- 📄 **README自動生成**: 各デスクにREADME.md自動作成
 
 ## ✨ 主な機能 (開発中)
 
@@ -203,11 +203,11 @@ CLIツールは7つの主要コマンドグループを提供します：
 - `haconiwa resource scan` - リソーススキャン
 - `haconiwa resource list` - リソース一覧表示
 
-### `space` - tmuxスペースと会社管理
-tmuxを使った効率的な開発ワークスペース管理
-- `haconiwa space create <name>` - tmux会社作成
-- `haconiwa space list` - 会社一覧
-- `haconiwa space attach <name>` - 会社接続
+### `company` - tmux会社と企業管理
+tmuxを使った効率的な開発企業環境管理
+- `haconiwa company create <name>` - tmux会社作成
+- `haconiwa company list` - 会社一覧
+- `haconiwa company attach <name>` - 会社接続
 
 ### `task` - タスク管理コマンド
 git-worktreeと連携したタスク管理

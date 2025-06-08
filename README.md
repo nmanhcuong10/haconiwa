@@ -31,37 +31,37 @@ Create and manage a 4x4 grid multi-agent development environment **right now**:
 pip install haconiwa
 
 # 2. Create multi-agent environment (4 organizations × 4 roles = 16 panes)
-haconiwa space multiagent --name my-project \
-  --base-path /path/to/workspace \
+haconiwa company multiagent --name my-project \
+  --base-path /path/to/desks \
   --org01-name "Frontend Development" --task01 "UI Design" \
   --org02-name "Backend Development" --task02 "API Development" \
   --org03-name "Database Team" --task03 "Schema Design" \
   --org04-name "DevOps Team" --task04 "Infrastructure"
 
 # 3. List companies
-haconiwa space list
+haconiwa company list
 
 # 4. Attach to existing company
-haconiwa space attach my-project
+haconiwa company attach my-project
 
 # 5. Update company settings (rename existing company)
-haconiwa space multiagent --name my-project \
-  --base-path /path/to/workspace \
+haconiwa company multiagent --name my-project \
+  --base-path /path/to/desks \
   --org01-name "New Frontend Team" --task01 "React Development" \
   --no-attach
 
 # 6. Terminate company
-haconiwa space kill my-project
+haconiwa company kill my-project
 ```
 
 **📁 Auto-created Directory Structure:**
 ```
-/path/to/workspace/
+/path/to/desks/
 ├── org-01/
-│   ├── 01boss/          # PM workspace
-│   ├── 01worker-a/      # Worker-A workspace
-│   ├── 01worker-b/      # Worker-B workspace
-│   └── 01worker-c/      # Worker-C workspace
+│   ├── 01boss/          # PM desk
+│   ├── 01worker-a/      # Worker-A desk
+│   ├── 01worker-b/      # Worker-B desk
+│   └── 01worker-c/      # Worker-C desk
 ├── org-02/
 │   ├── 02boss/
 │   ├── 02worker-a/
@@ -73,11 +73,11 @@ haconiwa space kill my-project
 
 **✅ Actually Working Features:**
 - 🏢 **Multi-Agent Environment**: 4x4 (16 panes) organizational tmux layout
-- 📁 **Auto Directory Structure**: Automatic workspace creation by organization/role
+- 🏗️ **Auto Directory Structure**: Automatic desk creation by organization/role
 - 🏷️ **Custom Organization & Task Names**: Dynamic title configuration
 - 🔄 **Company Updates**: Safe configuration changes for existing companies
-- 📋 **Company Management**: Complete support for create/list/attach/delete
-- 📄 **Auto README Generation**: Automatic README.md creation in each directory
+- 🏛️ **Company Management**: Complete support for create/list/attach/delete
+- 📄 **Auto README Generation**: Automatic README.md creation in each desk
 
 ## ✨ Key Features (In Development)
 
@@ -203,11 +203,11 @@ Scan and manage project resources (databases, files, etc.)
 - `haconiwa resource scan` - Scan resources
 - `haconiwa resource list` - List resources
 
-### `space` - Manage tmux Spaces and Companies
-Efficient development workspace management via tmux
-- `haconiwa space create <name>` - Create tmux company
-- `haconiwa space list` - List companies
-- `haconiwa space attach <name>` - Attach to company
+### `company` - Manage tmux Companies and Enterprises
+Efficient development enterprise environment management via tmux
+- `haconiwa company create <name>` - Create tmux company
+- `haconiwa company list` - List companies
+- `haconiwa company attach <name>` - Attach to company
 
 ### `task` - Task Management Commands
 Task management integrated with git-worktree

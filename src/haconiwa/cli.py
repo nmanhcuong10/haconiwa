@@ -6,7 +6,7 @@ import sys
 
 from haconiwa.core.cli import core_app
 from haconiwa.world.cli import world_app
-from haconiwa.space.cli import space_app
+from haconiwa.space.cli import company_app
 from haconiwa.resource.cli import resource_app
 from haconiwa.agent.cli import agent_app
 from haconiwa.task.cli import task_app
@@ -49,7 +49,7 @@ def main(
 
 app.add_typer(core_app, name="core")
 app.add_typer(world_app, name="world")
-app.add_typer(space_app, name="space")
+app.add_typer(company_app, name="company")
 app.add_typer(resource_app, name="resource")
 app.add_typer(agent_app, name="agent")
 app.add_typer(task_app, name="task")

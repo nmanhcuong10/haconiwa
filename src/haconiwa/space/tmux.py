@@ -169,25 +169,25 @@ class TmuxSession:
         base_path: str,
         organizations: Optional[List[Dict[str, str]]] = None
     ) -> libtmux.Session:
-        """Create 4x4 multiagent tmux session with 4 organizations x 4 roles"""
+        """Create 4x4 multiagent tmux company with 4 organizations x 4 roles"""
         
         # Default organizations if not provided
         if organizations is None:
             organizations = [
-                {"id": "org-01", "org_name": "", "task_name": "", "workspace": "video-model-workspace"},
-                {"id": "org-02", "org_name": "", "task_name": "", "workspace": "lipsync-workspace"},
-                {"id": "org-03", "org_name": "", "task_name": "", "workspace": "yaml-enhancement-workspace"},
-                {"id": "org-04", "org_name": "", "task_name": "", "workspace": "agent-docs-search-workspace"}
+                {"id": "org-01", "org_name": "", "task_name": "", "workspace": "video-model-desk"},
+                {"id": "org-02", "org_name": "", "task_name": "", "workspace": "lipsync-desk"},
+                {"id": "org-03", "org_name": "", "task_name": "", "workspace": "yaml-enhancement-desk"},
+                {"id": "org-04", "org_name": "", "task_name": "", "workspace": "agent-docs-search-desk"}
             ]
         
         # Check if session already exists
         existing_session = self.get_session(name)
         if existing_session:
-            print(f"🔄 Updating existing session '{name}'...")
+            print(f"🔄 Updating existing company '{name}'...")
             return self._update_existing_session(name, base_path, organizations)
         
         # Create directory structure
-        self._create_directory_structure(base_path, organizations)
+        self._create_directory_structure(base_path, organizations, company_name=name)
         
         try:
             # Create new session
@@ -240,9 +240,9 @@ class TmuxSession:
                 for role_idx, role in enumerate(roles):
                     pane_idx = org_idx * 4 + role_idx
                     
-                    # Create workspace path based on new directory structure
+                    # Create desk path based on new directory structure
                     role_dir = f"{org_idx+1:02d}{role}"  # e.g., "01boss", "01worker-a"
-                    workspace_path = f"{base_path}/{org['id']}/{role_dir}"
+                    desk_path = f"{base_path}/{org['id']}/{role_dir}"
                     
                     # Set pane title with organization name and/or task name
                     title_parts = []
@@ -264,7 +264,7 @@ class TmuxSession:
                     
                     # Configure pane
                     self._setup_multiagent_pane_subprocess(
-                        name, pane_idx, title, workspace_path, org, role
+                        name, pane_idx, title, desk_path, org, role
                     )
             
             # Wait a bit then clear all panes
@@ -276,7 +276,7 @@ class TmuxSession:
             return self.get_session(name)
             
         except subprocess.CalledProcessError as e:
-            raise TmuxSessionError(f"Failed to create multiagent session: {str(e)}")
+            raise TmuxSessionError(f"Failed to create multiagent company: {str(e)}")
     
     def _update_existing_session(
         self,
@@ -284,10 +284,10 @@ class TmuxSession:
         base_path: str,
         organizations: List[Dict[str, str]]
     ) -> libtmux.Session:
-        """Update existing session pane titles without recreating the session"""
+        """Update existing company pane titles without recreating the company"""
         try:
             # Create any missing directories (but don't overwrite existing ones)
-            self._create_directory_structure(base_path, organizations, update_mode=True)
+            self._create_directory_structure(base_path, organizations, update_mode=True, company_name=name)
             
             # Update pane titles only
             roles = ['boss', 'worker-a', 'worker-b', 'worker-c']
@@ -318,26 +318,29 @@ class TmuxSession:
                     pane_target = f"{name}:0.{pane_idx}"
                     self._run_tmux_command(['select-pane', '-t', pane_target, '-T', title])
             
-            print(f"✅ Updated pane titles for session '{name}'")
+            print(f"✅ Updated pane titles for company '{name}'")
             return self.get_session(name)
             
         except subprocess.CalledProcessError as e:
-            raise TmuxSessionError(f"Failed to update session: {str(e)}")
+            raise TmuxSessionError(f"Failed to update company: {str(e)}")
     
-    def _create_directory_structure(self, base_path: str, organizations: List[Dict[str, str]], update_mode: bool = False) -> None:
+    def _create_directory_structure(self, base_path: str, organizations: List[Dict[str, str]], update_mode: bool = False, company_name: str = "default") -> None:
         """Create directory structure for multiagent environment"""
         try:
             # Create base path if it doesn't exist
-            Path(base_path).mkdir(parents=True, exist_ok=True)
+            base_path_obj = Path(base_path)
+            base_path_obj.mkdir(parents=True, exist_ok=True)
             
             roles = ['boss', 'worker-a', 'worker-b', 'worker-c']
+            created_directories = []
             
             for org_idx, org in enumerate(organizations):
                 # Create organization directory
-                org_path = Path(base_path) / org['id']
+                org_path = base_path_obj / org['id']
                 org_path.mkdir(exist_ok=True)
+                created_directories.append(org['id'])
                 
-                # Create role directories
+                # Create role directories (desks)
                 for role in roles:
                     role_dir = f"{org_idx+1:02d}{role}"  # e.g., "01boss", "01worker-a"
                     role_path = org_path / role_dir
@@ -353,10 +356,10 @@ class TmuxSession:
 
 ## 役割: {role}
 
-このディレクトリは {org['id'].upper()} の {role} 用の作業スペースです。
+このディレクトリは {org['id'].upper()} の {role} 用のデスクです。
 
 ### 使用方法
-- このディレクトリでプロジェクトの作業を行ってください
+- このデスクでプロジェクトの作業を行ってください
 - 各役割に応じたタスクを管理してください
 - 他の組織・役割との連携を意識してください
 
@@ -364,12 +367,37 @@ class TmuxSession:
 {time.strftime('%Y-%m-%d %H:%M:%S')}
 """
                         readme_path.write_text(readme_content, encoding='utf-8')
+            
+            # Create metadata file for cleanup tracking (only if not in update mode)
+            if not update_mode:
+                self._create_company_metadata(base_path_obj, created_directories, company_name)
                         
         except Exception as e:
             if update_mode:
                 print(f"Warning: Failed to update directory structure: {e}")
             else:
                 print(f"Warning: Failed to create directory structure: {e}")
+    
+    def _create_company_metadata(self, base_path_obj: Path, directories: List[str], company_name: str = "default") -> None:
+        """Create metadata file for tracking created directories"""
+        try:
+            import json
+            
+            # Use company-specific metadata filename for easier cleanup
+            metadata_file = base_path_obj / f".haconiwa-{company_name}.json"
+            
+            metadata = {
+                "company_name": company_name,
+                "created_at": time.strftime('%Y-%m-%d %H:%M:%S'),
+                "directories": directories,
+                "base_path": str(base_path_obj)
+            }
+            
+            with metadata_file.open('w', encoding='utf-8') as f:
+                json.dump(metadata, f, indent=2, ensure_ascii=False)
+                
+        except Exception as e:
+            print(f"Warning: Failed to create metadata file: {e}")
 
     def _run_tmux_command(self, cmd: List[str], check: bool = True) -> subprocess.CompletedProcess:
         """Run tmux command via subprocess"""
@@ -381,7 +409,7 @@ class TmuxSession:
         session_name: str,
         pane_idx: int, 
         title: str, 
-        workspace_path: str, 
+        desk_path: str, 
         org: Dict[str, str], 
         role: str
     ) -> None:
@@ -392,7 +420,7 @@ class TmuxSession:
             # Set pane title
             self._run_tmux_command(['select-pane', '-t', pane_target, '-T', title])
             
-            # Change to workspace directory and show info
+            # Change to desk directory and show info
             display_parts = [f"{org['id'].upper()} {role.upper()}"]
             if org['org_name']:
                 display_parts.append(f"組織: {org['org_name']}")
@@ -401,7 +429,7 @@ class TmuxSession:
             display_text = " - ".join(display_parts)
             
             self._run_tmux_command(['send-keys', '-t', pane_target, 
-                                   f"cd {workspace_path} && echo '=== {display_text} ===' && pwd", 'Enter'])
+                                   f"cd {desk_path} && echo '=== {display_text} ===' && pwd", 'Enter'])
             
             # Set custom prompt
             prompt_prefix = f"({org['id'].upper()}-{role.upper()})"
@@ -413,53 +441,74 @@ class TmuxSession:
             print(f"Warning: Failed to setup pane {pane_idx}: {e}")
 
     def attach_session(self, session_name: str) -> None:
-        """Attach to an existing tmux session"""
+        """Attach to an existing tmux company"""
         session = self.get_session(session_name)
         if not session:
-            raise TmuxSessionError(f"Session '{session_name}' not found")
+            raise TmuxSessionError(f"Company '{session_name}' not found")
         
         try:
             # Use os.execvp to replace current process with tmux attach
             import os
             os.execvp('tmux', ['tmux', 'attach-session', '-t', session_name])
         except Exception as e:
-            raise TmuxSessionError(f"Failed to attach to session: {str(e)}")
+            raise TmuxSessionError(f"Failed to attach to company: {str(e)}")
 
-    def _setup_multiagent_pane(
-        self, 
-        session: libtmux.Session, 
-        pane_idx: int, 
-        title: str, 
-        workspace_path: str, 
-        org: Dict[str, str], 
-        role: str
-    ) -> None:
-        """Setup individual pane for multiagent environment"""
+    def clean_company_directories(self, company_name: str, base_path: str) -> None:
+        """Clean directories created for a company"""
         try:
-            window = session.attached_window
-            pane = window.get_pane(pane_idx)
+            import shutil
+            base_path_obj = Path(base_path)
             
-            # Set pane title
-            pane.send_keys(f"printf '\\033]2;{title}\\033\\\\'")
+            if not base_path_obj.exists():
+                print(f"Base path '{base_path}' does not exist, nothing to clean")
+                return
             
-            # Change to workspace directory
-            pane.send_keys(f"cd {workspace_path}")
+            # Look for company metadata file first
+            metadata_file = base_path_obj / f".haconiwa-{company_name}.json"
+            if metadata_file.exists():
+                # If metadata exists, use it to determine what to clean
+                try:
+                    import json
+                    with metadata_file.open('r', encoding='utf-8') as f:
+                        metadata = json.load(f)
+                    
+                    # Remove directories listed in metadata
+                    for org_dir in metadata.get('directories', []):
+                        org_path = base_path_obj / org_dir
+                        if org_path.exists() and org_path.is_dir():
+                            shutil.rmtree(org_path)
+                            print(f"Removed directory: {org_path}")
+                    
+                    # Remove metadata file
+                    metadata_file.unlink()
+                    print(f"Removed metadata file: {metadata_file}")
+                    
+                except (json.JSONDecodeError, KeyError) as e:
+                    print(f"Warning: Failed to read metadata file: {e}")
+                    # Fallback to default cleanup
+                    self._clean_default_directories(base_path_obj)
+            else:
+                # No metadata file, use default organization structure
+                self._clean_default_directories(base_path_obj)
             
-            # Display organization and role info
-            display_parts = [f"{org['id'].upper()} {role.upper()}"]
-            if org['org_name']:
-                display_parts.append(f"組織: {org['org_name']}")
-            if org['task_name']:
-                display_parts.append(f"タスク: {org['task_name']}")
-            display_text = " - ".join(display_parts)
-            
-            pane.send_keys(f"echo '=== {display_text} ==='")
-            pane.send_keys("pwd")
-            
-            # Set custom prompt
-            prompt_prefix = f"({org['id'].upper()}-{role.upper()})"
-            pane.send_keys(f"export PS1='{prompt_prefix} \\$ '")
-            
+            # Remove base directory if it's empty
+            try:
+                if base_path_obj.exists() and not any(base_path_obj.iterdir()):
+                    base_path_obj.rmdir()
+                    print(f"Removed empty base directory: {base_path_obj}")
+            except OSError:
+                # Directory not empty, that's fine
+                pass
+                
         except Exception as e:
-            # Don't fail the entire session creation for individual pane setup issues
-            print(f"Warning: Failed to setup pane {pane_idx}: {e}")
+            print(f"Warning: Failed to clean directories: {e}")
+    
+    def _clean_default_directories(self, base_path_obj: Path) -> None:
+        """Clean default organization directories (org-01 to org-04)"""
+        import shutil
+        
+        for org_id in ['org-01', 'org-02', 'org-03', 'org-04']:
+            org_path = base_path_obj / org_id
+            if org_path.exists() and org_path.is_dir():
+                shutil.rmtree(org_path)
+                print(f"Removed directory: {org_path}")
