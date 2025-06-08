@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "haconiwa"
-version = "0.2.1"
+version = "0.3.0"
 description = "AI協調開発支援Python CLIツール - 箱庭での開発を支援"
 readme = "README.md"
 authors = [

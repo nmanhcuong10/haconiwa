@@ -16,7 +16,7 @@
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **📄 Changelog**: [CHANGELOG.md](CHANGELOG.md) - All version change history
-- **🏷️ Latest Version**: 0.2.0
+- **🏷️ Latest Version**: 0.3.0
 - **📦 PyPI**: [haconiwa](https://pypi.org/project/haconiwa/)
 - **🔖 GitHub Releases**: [Releases](https://github.com/dai-motoki/haconiwa/releases)
 
