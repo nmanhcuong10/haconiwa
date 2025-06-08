@@ -28,15 +28,14 @@
 
 ```bash
 # 1. インストール
-pip install haconiwa
+pip install haconiwa --upgrade
 
 # 2. マルチエージェント環境作成（4組織 × 4役割 = 16ペイン）
 haconiwa company build --name my-company \
-  --base-path /path/to/desks \
   --org01-name "フロントエンド開発部" --task01 "UI設計" \
   --org02-name "バックエンド開発部" --task02 "API開発" \
   --org03-name "データベース部門" --task03 "スキーマ設計" \
-  --org04-name "DevOps部門" --task04 "インフラ構築"
+  --org04-name "DevOps部門" --task04 "インフラ構築" --no-attach
 
 # 3. 会社一覧確認
 haconiwa company list
@@ -50,12 +49,11 @@ haconiwa company build --name my-company \
 
 # 6. 会社を完全に再構築（--rebuildオプション）
 haconiwa company build --name my-company \
-  --base-path /path/to/desks \
   --org01-name "リニューアル開発部" \
   --rebuild
 
 # 7. 会社終了（ディレクトリも削除）
-haconiwa company kill my-company --clean-dirs --base-path /path/to/desks --force
+haconiwa company kill my-company --clean-dirs --force
 
 # 8. 会社終了（ディレクトリは保持）
 haconiwa company kill my-company --force

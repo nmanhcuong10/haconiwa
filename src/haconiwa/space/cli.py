@@ -13,7 +13,7 @@ company_app = typer.Typer(help="tmux会社・企業管理 🏢")
 @company_app.command()
 def build(
     name: str = typer.Option(..., "--name", "-n", help="Company name"),
-    base_path: str = typer.Option(".", "--base-path", "-p", help="Base path for desks"),
+    base_path: Optional[str] = typer.Option(None, "--base-path", "-p", help="Base path for desks (default: ./{company_name})"),
     org01_name: str = typer.Option("", "--org01-name", help="Organization 1 name (optional)"),
     org02_name: str = typer.Option("", "--org02-name", help="Organization 2 name (optional)"),
     org03_name: str = typer.Option("", "--org03-name", help="Organization 3 name (optional)"),
@@ -30,6 +30,35 @@ def build(
     rebuild: bool = typer.Option(False, "--rebuild", help="Force rebuild even if company exists"),
 ):
     """🏗️ Build a company (create new or update existing 4x4 multiagent tmux company)"""
+    
+    # Set default base_path if not provided
+    if base_path is None:
+        base_path = f"./{name}"
+    
+    # Check if base_path directory exists and warn user
+    base_path_obj = Path(base_path)
+    if base_path_obj.exists() and any(base_path_obj.iterdir()):
+        typer.echo(f"⚠️ Warning: Directory '{base_path}' already exists and is not empty.")
+        typer.echo("📁 Existing contents:")
+        
+        # Show first few items in directory
+        items = list(base_path_obj.iterdir())
+        for i, item in enumerate(items[:5]):  # Show max 5 items
+            item_type = "📁" if item.is_dir() else "📄"
+            typer.echo(f"   {item_type} {item.name}")
+        
+        if len(items) > 5:
+            typer.echo(f"   ... and {len(items) - 5} more items")
+        
+        # Ask for confirmation unless rebuild flag is set
+        if not rebuild:
+            typer.echo("\n🤔 This may overwrite or mix with existing files.")
+            continue_anyway = typer.confirm("Do you want to continue anyway?")
+            if not continue_anyway:
+                typer.echo("❌ Operation cancelled by user.")
+                raise typer.Exit(0)
+        else:
+            typer.echo("\n🔨 --rebuild flag is set, continuing with rebuild...")
     
     config = Config("config.yaml")
     tmux = TmuxSession(config)
@@ -175,9 +204,14 @@ def kill(
     name: str = typer.Argument(..., help="Company name"),
     force: bool = typer.Option(False, help="Force kill without confirmation"),
     clean_dirs: bool = typer.Option(False, "--clean-dirs", help="Remove related directories after killing company"),
-    base_path: str = typer.Option(".", "--base-path", "-p", help="Base path where directories are located (required with --clean-dirs)"),
+    base_path: Optional[str] = typer.Option(None, "--base-path", "-p", help="Base path where directories are located (default: ./{company_name}, required with --clean-dirs)"),
 ):
     """💀 Kill a tmux company and clean up resources"""
+    
+    # Set default base_path if not provided
+    if base_path is None:
+        base_path = f"./{name}"
+    
     if not force:
         confirm_msg = f"Are you sure you want to kill company '{name}'?"
         if clean_dirs:

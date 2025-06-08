@@ -178,22 +178,25 @@ class TestCompanyBuild:
     def test_build_no_changes_specified(self):
         """Test building existing company with no changes specified"""
         company_name = "test-build-nochange"
+        base_path = self.test_path / "nochange-test"
         self.created_companies.append(company_name)
         
         # First build - create company
         result = self._run_haconiwa_command([
             "company", "build",
             "--name", company_name,
+            "--base-path", str(base_path),
             "--org01-name", "TestOrg",
             "--no-attach"
         ])
         
         assert result.returncode == 0, f"Initial build failed: {result.stderr}"
         
-        # Second build with no changes
+        # Second build with no changes - specify base path to avoid directory warning
         result = self._run_haconiwa_command([
             "company", "build",
-            "--name", company_name
+            "--name", company_name,
+            "--base-path", str(base_path)
         ])
         
         assert result.returncode == 0, f"No-change build failed: {result.stderr}"
@@ -264,6 +267,7 @@ class TestCompanyBuild:
     def test_build_existence_detection(self):
         """Test that build properly detects existing companies"""
         company_name = "test-build-detection"
+        base_path = self.test_path / "detection-test"
         self.created_companies.append(company_name)
         
         # Verify company doesn't exist initially
@@ -273,6 +277,7 @@ class TestCompanyBuild:
         result1 = self._run_haconiwa_command([
             "company", "build",
             "--name", company_name,
+            "--base-path", str(base_path),
             "--org01-name", "TestOrg",
             "--no-attach"
         ])
@@ -287,8 +292,251 @@ class TestCompanyBuild:
         result2 = self._run_haconiwa_command([
             "company", "build", 
             "--name", company_name,
+            "--base-path", str(base_path),
             "--org01-name", "UpdatedOrg"
         ])
         
         assert result2.returncode == 0
-        assert "Updating existing company" in result2.stdout, "Should indicate existing company update" 
+        assert "Updating existing company" in result2.stdout, "Should indicate existing company update"
+    
+    def test_build_default_base_path(self):
+        """Test that default base path is set to ./{company_name}"""
+        company_name = "test-default-path"
+        self.created_companies.append(company_name)
+        
+        # Build company without specifying base-path
+        result = self._run_haconiwa_command([
+            "company", "build",
+            "--name", company_name,
+            "--no-attach"
+        ])
+        
+        assert result.returncode == 0, f"Build with default path failed: {result.stderr}"
+        assert f"Base path: ./{company_name}" in result.stdout, "Should show default base path"
+        
+        # Verify company is running
+        assert self._verify_company_running(company_name), "Company should be running"
+        
+        # Verify default directory was created
+        default_path = Path(f"./{company_name}")
+        assert default_path.exists(), f"Default directory ./{company_name} should be created"
+        
+        # Clean up the directory after test
+        if default_path.exists():
+            shutil.rmtree(default_path)
+    
+    def test_build_existing_directory_warning(self):
+        """Test warning when building in existing non-empty directory"""
+        company_name = "test-existing-dir"
+        test_dir = Path(f"./{company_name}")
+        self.created_companies.append(company_name)
+        
+        try:
+            # Create directory with some content
+            test_dir.mkdir(exist_ok=True)
+            (test_dir / "existing_file.txt").write_text("existing content")
+            
+            # Try to build company (should show warning and ask for confirmation)
+            # We'll simulate "no" response by not providing input
+            result = self._run_haconiwa_command([
+                "company", "build", 
+                "--name", company_name,
+                "--no-attach"
+            ], input_text="n\n")  # Simulate user pressing 'n' for no
+            
+            # Check that warning was shown
+            assert "Warning: Directory" in result.stdout, "Should show directory warning"
+            assert "already exists and is not empty" in result.stdout, "Should mention non-empty directory"
+            assert "existing_file.txt" in result.stdout, "Should show existing file"
+            
+        finally:
+            # Clean up
+            if test_dir.exists():
+                shutil.rmtree(test_dir)
+    
+    def test_build_existing_directory_with_rebuild(self):
+        """Test that --rebuild flag skips directory warning"""
+        company_name = "test-rebuild-skip-warning"
+        test_dir = Path(f"./{company_name}")
+        self.created_companies.append(company_name)
+        
+        try:
+            # Create directory with some content
+            test_dir.mkdir(exist_ok=True)
+            (test_dir / "existing_file.txt").write_text("existing content")
+            
+            # Build with --rebuild flag (should skip warning)
+            result = self._run_haconiwa_command([
+                "company", "build",
+                "--name", company_name,
+                "--rebuild",
+                "--no-attach"
+            ])
+            
+            assert result.returncode == 0, f"Build with rebuild should succeed: {result.stderr}"
+            assert "--rebuild flag is set, continuing" in result.stdout, "Should mention rebuild flag"
+            assert self._verify_company_running(company_name), "Company should be running"
+            
+        finally:
+            # Clean up
+            if test_dir.exists():
+                shutil.rmtree(test_dir)
+    
+    def test_build_custom_base_path_still_works(self):
+        """Test that custom base path still works as before"""
+        company_name = "test-custom-path"
+        custom_path = self.test_path / "custom-location"
+        self.created_companies.append(company_name)
+        
+        # Build with custom base path
+        result = self._run_haconiwa_command([
+            "company", "build",
+            "--name", company_name,
+            "--base-path", str(custom_path),
+            "--no-attach"
+        ])
+        
+        assert result.returncode == 0, f"Build with custom path failed: {result.stderr}"
+        assert f"Base path: {custom_path}" in result.stdout, "Should show custom base path"
+        
+        # Verify custom directory was created
+        assert custom_path.exists(), "Custom base path directory should be created"
+        
+        # Verify company is running
+        assert self._verify_company_running(company_name), "Company should be running"
+    
+    def test_build_tmux_pane_directory_allocation(self):
+        """Test that tmux panes are correctly allocated to proper directories"""
+        company_name = "test-pane-dirs"
+        base_path = self.test_path / "pane-test"
+        self.created_companies.append(company_name)
+        
+        # Build company with default settings
+        result = self._run_haconiwa_command([
+            "company", "build",
+            "--name", company_name,
+            "--base-path", str(base_path),
+            "--no-attach"
+        ])
+        
+        assert result.returncode == 0, f"Build failed: {result.stderr}"
+        assert self._verify_company_running(company_name), "Company should be running"
+        
+        # Check tmux pane directories using tmux directly
+        pane_result = subprocess.run([
+            "tmux", "list-panes", "-t", company_name, 
+            "-F", "#{pane_current_path}"
+        ], capture_output=True, text=True, check=False)
+        
+        if pane_result.returncode == 0:
+            pane_paths = pane_result.stdout.strip().split('\n')
+            assert len(pane_paths) == 16, "Should have 16 panes"
+            
+            # Verify each organization has 4 panes (boss + 3 workers)
+            for org_num in range(1, 5):
+                org_id = f"org-{org_num:02d}"
+                org_panes = [p for p in pane_paths if f"/{org_id}/" in p]
+                assert len(org_panes) == 4, f"Organization {org_id} should have 4 panes"
+                
+                # Check specific role directories - format: {base_path}/org-XX/XXrole
+                expected_roles = ["boss", "worker-a", "worker-b", "worker-c"]
+                for role in expected_roles:
+                    role_dir = f"{org_num:02d}{role}"
+                    role_panes = [p for p in org_panes if role_dir in p]
+                    assert len(role_panes) == 1, f"Should have one pane for {org_id}/{role_dir}, found in paths: {org_panes}"
+    
+    def test_build_organization_name_in_pane_titles(self):
+        """Test that organization names appear correctly in tmux pane titles"""
+        company_name = "test-pane-titles"
+        base_path = self.test_path / "title-test"
+        self.created_companies.append(company_name)
+        
+        # Build company with custom organization names
+        result = self._run_haconiwa_command([
+            "company", "build",
+            "--name", company_name,
+            "--base-path", str(base_path),
+            "--org01-name", "フロントエンド開発部",
+            "--org02-name", "バックエンド開発部",
+            "--no-attach"
+        ])
+        
+        assert result.returncode == 0, f"Build failed: {result.stderr}"
+        assert self._verify_company_running(company_name), "Company should be running"
+        
+        # Check tmux pane titles
+        title_result = subprocess.run([
+            "tmux", "list-panes", "-t", company_name,
+            "-F", "#{pane_title}"
+        ], capture_output=True, text=True, check=False)
+        
+        if title_result.returncode == 0:
+            pane_titles = title_result.stdout.strip().split('\n')
+            assert len(pane_titles) == 16, "Should have 16 pane titles"
+            
+            # Check that custom organization names appear in titles
+            frontend_titles = [t for t in pane_titles if "フロントエンド開発部" in t]
+            backend_titles = [t for t in pane_titles if "バックエンド開発部" in t]
+            default_org03_titles = [t for t in pane_titles if "ORG-03" in t]
+            default_org04_titles = [t for t in pane_titles if "ORG-04" in t]
+            
+            assert len(frontend_titles) == 4, "Should have 4 panes with frontend org name"
+            assert len(backend_titles) == 4, "Should have 4 panes with backend org name"
+            assert len(default_org03_titles) == 4, "Should have 4 panes with default ORG-03"
+            assert len(default_org04_titles) == 4, "Should have 4 panes with default ORG-04"
+            
+            # Verify role titles are included
+            for title in frontend_titles:
+                assert any(role in title for role in ["BOSS", "WORKER-A", "WORKER-B", "WORKER-C"]), \
+                    f"Title '{title}' should contain role information"
+    
+    def test_build_directory_structure_completeness(self):
+        """Test that complete directory structure is created with proper metadata"""
+        company_name = "test-dir-structure"
+        base_path = self.test_path / "structure-test"
+        self.created_companies.append(company_name)
+        
+        # Build company
+        result = self._run_haconiwa_command([
+            "company", "build",
+            "--name", company_name,
+            "--base-path", str(base_path),
+            "--org01-name", "テスト組織1",
+            "--task01", "テストタスク1",
+            "--no-attach"
+        ])
+        
+        assert result.returncode == 0, f"Build failed: {result.stderr}"
+        
+        # Verify complete directory structure
+        assert base_path.exists(), "Base directory should exist"
+        
+        # Check metadata file
+        metadata_file = base_path / f".haconiwa-{company_name}.json"
+        assert metadata_file.exists(), "Metadata file should exist"
+        
+        # Verify all 4 organizations with 4 roles each = 16 directories
+        total_role_dirs = 0
+        for org_num in range(1, 5):
+            org_id = f"org-{org_num:02d}"
+            org_path = base_path / org_id
+            assert org_path.exists(), f"Organization directory {org_id} should exist"
+            
+            for role in ["boss", "worker-a", "worker-b", "worker-c"]:
+                role_dir = org_path / f"{org_num:02d}{role}"
+                assert role_dir.exists(), f"Role directory {role_dir} should exist"
+                assert role_dir.is_dir(), f"{role_dir} should be a directory"
+                total_role_dirs += 1
+        
+        assert total_role_dirs == 16, "Should have exactly 16 role directories"
+        
+        # Verify metadata content if possible
+        try:
+            with open(metadata_file, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
+                assert metadata.get('company_name') == company_name, "Metadata should contain company name"
+                assert 'directories' in metadata, "Metadata should contain directories info"
+                assert len(metadata['directories']) == 4, "Should have 4 organization directories"
+        except (json.JSONDecodeError, FileNotFoundError):
+            # If metadata format is different, just verify file exists (already done above)
+            pass 
