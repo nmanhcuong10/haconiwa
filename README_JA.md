@@ -16,7 +16,7 @@
 このプロジェクトは[Semantic Versioning](https://semver.org/lang/ja/)に従っています。
 
 - **📄 変更履歴**: [CHANGELOG.md](CHANGELOG.md) - 全てのバージョンの変更履歴
-- **🏷️ 最新バージョン**: 0.1.4
+- **🏷️ 最新バージョン**: 0.2.0
 - **📦 PyPI**: [haconiwa](https://pypi.org/project/haconiwa/)
 - **🔖 GitHubリリース**: [Releases](https://github.com/dai-motoki/haconiwa/releases)
 

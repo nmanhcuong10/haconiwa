@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-01-08
+
+### Added
+- 🗑️ **Directory cleanup functionality** for `haconiwa company kill` command
+- 📋 **`--clean-dirs` option** to automatically remove company directories
+- 🛡️ **Safety confirmation prompt** when using directory cleanup
+- 📄 **Metadata tracking system** for intelligent directory management
+- 🔄 **Fallback cleanup logic** when metadata files are missing
+- 🧪 **Comprehensive test suite** for directory cleanup functionality
+
+### Changed
+- 💀 **Enhanced kill command** with optional directory cleanup
+- 🔒 **Safety-first design**: Directory deletion requires explicit `--clean-dirs` flag
+- 📊 **Improved confirmation prompts** showing deletion scope
+
+### Technical
+- 📝 **JSON metadata files** for tracking created directories per company
+- 🧹 **Automatic cleanup** of empty base directories
+- 🧪 **Integration tests** covering full cleanup workflow
+- 🛡️ **Error handling** for permission issues and missing paths
+
 ## [0.1.4] - 2025-01-06
 
 ### Added
@@ -81,7 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🏗️ **Basic project structure**
 - 📄 **License and documentation** foundation
 
-[Unreleased]: https://github.com/dai-motoki/haconiwa/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/dai-motoki/haconiwa/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/dai-motoki/haconiwa/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/dai-motoki/haconiwa/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/dai-motoki/haconiwa/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/dai-motoki/haconiwa/compare/v0.1.1...v0.1.2
