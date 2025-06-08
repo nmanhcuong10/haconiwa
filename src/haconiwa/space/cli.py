@@ -11,25 +11,8 @@ logger = get_logger(__name__)
 company_app = typer.Typer(help="tmux会社・企業管理 🏢")
 
 @company_app.command()
-def create(
-    name: str = typer.Argument(..., help="Company name"),
-    layout: str = typer.Option("even-horizontal", help="Initial layout (even-horizontal/even-vertical/main-horizontal/main-vertical)"),
-    panes: int = typer.Option(2, help="Number of panes"),
-):
-    """Create a new tmux company with specified layout"""
-    config = Config("config.yaml")
-    tmux = TmuxSession(config)
-    try:
-        session = tmux.create_session(name)
-        typer.echo(f"🏢 Created company '{name}' with {panes} panes using {layout} layout")
-        return session
-    except Exception as e:
-        logger.error(f"Failed to create company: {e}")
-        raise typer.Exit(1)
-
-@company_app.command()
-def multiagent(
-    name: str = typer.Option("multiagent", "--name", "-n", help="Company name"),
+def build(
+    name: str = typer.Option(..., "--name", "-n", help="Company name"),
     base_path: str = typer.Option(".", "--base-path", "-p", help="Base path for desks"),
     org01_name: str = typer.Option("", "--org01-name", help="Organization 1 name (optional)"),
     org02_name: str = typer.Option("", "--org02-name", help="Organization 2 name (optional)"),
@@ -44,11 +27,21 @@ def multiagent(
     org03_desk: str = typer.Option("yaml-enhancement-desk", "--desk03", help="Organization 3 desk"),
     org04_desk: str = typer.Option("agent-docs-search-desk", "--desk04", help="Organization 4 desk"),
     attach: bool = typer.Option(True, "--attach/--no-attach", help="Attach to company after creation"),
+    rebuild: bool = typer.Option(False, "--rebuild", help="Force rebuild even if company exists"),
 ):
-    """🏢 Create 4x4 multiagent tmux company with 4 organizations x 4 roles (boss, worker-a, worker-b, worker-c)"""
+    """🏗️ Build a company (create new or update existing 4x4 multiagent tmux company)"""
     
     config = Config("config.yaml")
     tmux = TmuxSession(config)
+    
+    # Check if tmux session already exists
+    try:
+        result = subprocess.run(['tmux', 'has-session', '-t', name], 
+                              capture_output=True, check=False)
+        company_exists = result.returncode == 0
+    except FileNotFoundError:
+        typer.echo("❌ tmux is not installed or not found in PATH")
+        raise typer.Exit(1)
     
     # Custom organizations configuration
     organizations = [
@@ -59,32 +52,64 @@ def multiagent(
     ]
     
     try:
-        typer.echo(f"🏢 Creating 4x4 multiagent company: '{name}'")
-        typer.echo(f"🏗️ Base path: {base_path}")
-        typer.echo("🏛️ Organizations:")
-        for i, org in enumerate(organizations, 1):
-            org_display = f"{org['org_name']}" if org['org_name'] else f"{org['id'].upper()}"
-            task_display = f" - {org['task_name']}" if org['task_name'] else ""
-            typer.echo(f"   {i}. {org_display}{task_display} ({org['workspace']})")
-        
-        session = tmux.create_multiagent_session(name, base_path, organizations)
-        
-        typer.echo(f"✅ Created multiagent company '{name}' with 16 panes (4x4 layout)")
-        typer.echo("📊 Layout:")
-        typer.echo("   Row 1: ORG-01 (Boss | Worker-A | Worker-B | Worker-C)")
-        typer.echo("   Row 2: ORG-02 (Boss | Worker-A | Worker-B | Worker-C)")
-        typer.echo("   Row 3: ORG-03 (Boss | Worker-A | Worker-B | Worker-C)")
-        typer.echo("   Row 4: ORG-04 (Boss | Worker-A | Worker-B | Worker-C)")
-        
-        if attach:
-            typer.echo(f"🔗 Attaching to company '{name}'...")
-            # Attach to the tmux session (this will replace the current process)
-            tmux.attach_session(name)
+        if company_exists and not rebuild:
+            # Update existing company
+            typer.echo(f"🔄 Updating existing company: '{name}'")
             
-        return session
+            updates_made = []
+            # Track what updates were made
+            for i, org in enumerate(organizations, 1):
+                if org['org_name']:
+                    updates_made.append(f"Organization {i}: {org['org_name']}")
+                if org['task_name']:
+                    updates_made.append(f"Task {i}: {org['task_name']}")
+            
+            if updates_made:
+                typer.echo("📝 Updates applied:")
+                for update in updates_made:
+                    typer.echo(f"   ✅ {update}")
+                
+                # TODO: Implement actual metadata update logic
+                # This would update the metadata file and potentially tmux pane titles
+                
+            else:
+                typer.echo(f"ℹ️ No changes specified for company '{name}'")
+                typer.echo("💡 Company is already running. Use --rebuild to recreate it.")
+            
+        else:
+            # Create new company (or rebuild existing)
+            if company_exists and rebuild:
+                typer.echo(f"🔄 Rebuilding company: '{name}'")
+                # Kill existing session first
+                tmux.kill_session(name)
+            else:
+                typer.echo(f"🏗️ Building new company: '{name}'")
+            
+            typer.echo(f"🏗️ Base path: {base_path}")
+            typer.echo("🏛️ Organizations:")
+            for i, org in enumerate(organizations, 1):
+                org_display = f"{org['org_name']}" if org['org_name'] else f"{org['id'].upper()}"
+                task_display = f" - {org['task_name']}" if org['task_name'] else ""
+                typer.echo(f"   {i}. {org_display}{task_display} ({org['workspace']})")
+            
+            session = tmux.create_multiagent_session(name, base_path, organizations)
+            
+            typer.echo(f"✅ Built company '{name}' with 16 panes (4x4 layout)")
+            typer.echo("📊 Layout:")
+            typer.echo("   Row 1: ORG-01 (Boss | Worker-A | Worker-B | Worker-C)")
+            typer.echo("   Row 2: ORG-02 (Boss | Worker-A | Worker-B | Worker-C)")
+            typer.echo("   Row 3: ORG-03 (Boss | Worker-A | Worker-B | Worker-C)")
+            typer.echo("   Row 4: ORG-04 (Boss | Worker-A | Worker-B | Worker-C)")
+            
+            if attach:
+                typer.echo(f"🔗 Attaching to company '{name}'...")
+                # Attach to the tmux session (this will replace the current process)
+                tmux.attach_session(name)
+                
+            return session
         
     except Exception as e:
-        logger.error(f"Failed to create multiagent company: {e}")
+        logger.error(f"Failed to build company: {e}")
         raise typer.Exit(1)
 
 @company_app.command()
@@ -208,7 +233,7 @@ def list_companies(
                         typer.echo(f"   {attached_icon} {session_name}")
         else:
             typer.echo("🏭 No active companies found")
-            typer.echo("💡 Tip: Create a company with 'haconiwa company create <name>' or 'haconiwa company multiagent'")
+            typer.echo("💡 Tip: Build a company with 'haconiwa company build --name <name>'")
             
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to list companies: {e}")

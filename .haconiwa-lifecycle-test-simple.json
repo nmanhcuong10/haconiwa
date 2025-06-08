@@ -1,0 +1,11 @@
+{
+  "company_name": "lifecycle-test-simple",
+  "created_at": "2025-06-09 01:53:13",
+  "directories": [
+    "org-01",
+    "org-02",
+    "org-03",
+    "org-04"
+  ],
+  "base_path": "."
+}

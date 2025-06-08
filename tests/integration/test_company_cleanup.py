@@ -80,7 +80,7 @@ class TestCompanyCleanup:
         
         # Create company
         result = self._run_haconiwa_command([
-            "company", "multiagent",
+            "company", "build",
             "--name", company_name,
             "--base-path", str(base_path),
             "--org01-name", "テスト組織1",
@@ -123,7 +123,7 @@ class TestCompanyCleanup:
         
         # Create company first
         result = self._run_haconiwa_command([
-            "company", "multiagent",
+            "company", "build",
             "--name", company_name,
             "--base-path", str(base_path),
             "--org01-name", "テスト組織1",
@@ -161,7 +161,7 @@ class TestCompanyCleanup:
         
         # Create company first
         result = self._run_haconiwa_command([
-            "company", "multiagent",
+            "company", "build",
             "--name", company_name,
             "--base-path", str(base_path),
             "--org01-name", "保持テスト組織",
@@ -199,7 +199,7 @@ class TestCompanyCleanup:
         
         # Create company first
         result = self._run_haconiwa_command([
-            "company", "multiagent",
+            "company", "build",
             "--name", company_name,
             "--base-path", str(base_path),
             "--no-attach"
@@ -238,7 +238,7 @@ class TestCompanyCleanup:
         
         # Create company first
         result = self._run_haconiwa_command([
-            "company", "multiagent",
+            "company", "build",
             "--name", company_name,
             "--base-path", str(base_path),
             "--no-attach"
@@ -259,7 +259,7 @@ class TestCompanyCleanup:
         
         # Create company first (but directory creation might fail)
         result = self._run_haconiwa_command([
-            "company", "multiagent",
+            "company", "build",
             "--name", company_name,
             "--base-path", str(nonexistent_path),
             "--no-attach"
@@ -287,7 +287,7 @@ class TestCompanyCleanup:
         
         # Create company first
         result = self._run_haconiwa_command([
-            "company", "multiagent", 
+            "company", "build", 
             "--name", company_name,
             "--base-path", str(base_path),
             "--no-attach"

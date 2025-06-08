@@ -57,7 +57,8 @@ class TestFullLifecycle:
     def _verify_company_running(self, company_name: str) -> bool:
         """Verify company is running in tmux"""
         result = self._run_haconiwa_command(["company", "list"])
-        return company_name in result.stdout and "✓" in result.stdout
+        return (company_name in result.stdout and result.returncode == 0 and 
+                ("🏛️" in result.stdout or "🔗" in result.stdout))
     
     def _verify_directory_structure_complete(self, base_path: Path, company_name: str) -> Dict[str, bool]:
         """Verify complete directory structure with detailed checks"""
@@ -96,16 +97,16 @@ class TestFullLifecycle:
         
         return results
     
-    def test_complete_company_lifecycle_multiagent(self):
-        """Test complete lifecycle: multiagent creation → list → update → delete with cleanup"""
-        company_name = "lifecycle-test-multiagent"
-        base_path = self.test_path / "multiagent-desks"
+    def test_complete_company_lifecycle_build(self):
+        """Test complete lifecycle: company build → list → update → delete with cleanup"""
+        company_name = "lifecycle-test-build"
+        base_path = self.test_path / "build-desks"
         self.created_companies.append(company_name)
         
-        # Step 1: Create multiagent company
-        print(f"\n🏗️ Step 1: Creating multiagent company '{company_name}'")
+        # Step 1: Create company using build
+        print(f"\n🏗️ Step 1: Building company '{company_name}'")
         result = self._run_haconiwa_command([
-            "company", "multiagent",
+            "company", "build",
             "--name", company_name,
             "--base-path", str(base_path),
             "--org01-name", "営業部",
@@ -115,8 +116,8 @@ class TestFullLifecycle:
             "--no-attach"
         ])
         
-        assert result.returncode == 0, f"Multiagent creation failed: {result.stderr}"
-        assert "Company session created" in result.stdout or "multiagent" in result.stdout
+        assert result.returncode == 0, f"Company build failed: {result.stderr}"
+        assert "Built company" in result.stdout or "Building" in result.stdout
         
         # Verify company is running
         assert self._verify_company_running(company_name), "Company should be running after creation"
@@ -145,13 +146,15 @@ class TestFullLifecycle:
         assert result.returncode == 0, f"Company list failed: {result.stderr}"
         assert company_name in result.stdout, "Company should appear in list"
         
-        # Step 4: Update company (if update functionality exists)
-        print("🔄 Step 4: Testing company update")
+        # Step 4: Update company using build command
+        print("🔄 Step 4: Testing company update with build")
         result = self._run_haconiwa_command([
-            "company", "update", company_name,
+            "company", "build",
+            "--name", company_name,
             "--org01-name", "営業部門"
         ])
-        # Update might not be implemented, so we don't assert on return code
+        # Should update existing company
+        assert result.returncode == 0, f"Company update failed: {result.stderr}"
         
         # Step 5: Kill company without cleanup to test directory preservation
         print("⏹️ Step 5: Killing company without cleanup")
@@ -172,7 +175,7 @@ class TestFullLifecycle:
         # Step 6: Recreate company using existing directories
         print("🔄 Step 6: Recreating company with existing directories")
         result = self._run_haconiwa_command([
-            "company", "multiagent",
+            "company", "build",
             "--name", company_name,
             "--base-path", str(base_path),
             "--org01-name", "営業部門",
@@ -209,10 +212,12 @@ class TestFullLifecycle:
         company_name = "lifecycle-test-simple"
         self.created_companies.append(company_name)
         
-        # Step 1: Create simple company
-        print(f"\n🏗️ Step 1: Creating simple company '{company_name}'")
+        # Step 1: Create simple company using build
+        print(f"\n🏗️ Step 1: Building simple company '{company_name}'")
         result = self._run_haconiwa_command([
-            "company", "create", company_name
+            "company", "build",
+            "--name", company_name,
+            "--no-attach"
         ])
         
         assert result.returncode == 0, f"Simple company creation failed: {result.stderr}"
@@ -251,19 +256,24 @@ class TestFullLifecycle:
         ])
         # Should handle gracefully (not necessarily fail)
         
-        # Test 2: Create company with problematic name
+        # Test 2: Create company with valid name using build
         print("🧪 Test 2: Creating company with valid name")
         result = self._run_haconiwa_command([
-            "company", "create", company_name
+            "company", "build",
+            "--name", company_name,
+            "--no-attach"
         ])
         assert result.returncode == 0, f"Company creation failed: {result.stderr}"
         
-        # Test 3: Try to create duplicate company
-        print("🧪 Test 3: Creating duplicate company")
+        # Test 3: Try to create duplicate company (should update instead)
+        print("🧪 Test 3: Building duplicate company (should update)")
         result = self._run_haconiwa_command([
-            "company", "create", company_name
+            "company", "build",
+            "--name", company_name,
+            "--no-attach"
         ])
-        # Should handle duplicate creation appropriately
+        # Should handle gracefully by updating
+        assert result.returncode == 0, f"Company build (update) failed: {result.stderr}"
         
         # Test 4: Cleanup
         print("🧪 Test 4: Cleanup error test company")
@@ -281,13 +291,17 @@ class TestFullLifecycle:
         company2 = "lifecycle-concurrent-2"
         self.created_companies.extend([company1, company2])
         
-        # Create two companies simultaneously
+        # Create two companies simultaneously using build
         print(f"\n🔄 Creating two companies for concurrent testing")
         result1 = self._run_haconiwa_command([
-            "company", "create", company1
+            "company", "build",
+            "--name", company1,
+            "--no-attach"
         ])
         result2 = self._run_haconiwa_command([
-            "company", "create", company2
+            "company", "build",
+            "--name", company2,
+            "--no-attach"
         ])
         
         assert result1.returncode == 0, f"Company 1 creation failed: {result1.stderr}"

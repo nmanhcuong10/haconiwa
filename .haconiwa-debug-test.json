@@ -1,0 +1,11 @@
+{
+  "company_name": "debug-test",
+  "created_at": "2025-06-09 01:44:53",
+  "directories": [
+    "org-01",
+    "org-02",
+    "org-03",
+    "org-04"
+  ],
+  "base_path": "."
+}
