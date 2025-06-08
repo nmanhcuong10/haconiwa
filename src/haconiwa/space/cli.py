@@ -176,7 +176,7 @@ def list_spaces(
                               capture_output=True, text=True, check=False)
         
         if result.returncode == 0 and result.stdout.strip():
-            typer.echo("📋 Active tmux spaces:")
+            typer.echo("📋 Active company spaces:")
             
             for line in result.stdout.strip().split('\n'):
                 parts = line.split(':')

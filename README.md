@@ -20,6 +20,50 @@
 - 📊 **Resource Management**: Efficient scanning of databases and file paths
 - 👁️ **Real-time Monitoring**: Progress monitoring of agents and tasks
 
+## 🏗️ Architecture Concepts
+
+### tmux ↔ Haconiwa Concept Mapping
+
+| tmux Concept | Haconiwa Concept | Description |
+|-------------|------------------|-------------|
+| **Session** | **Company** | Top-level management unit representing entire project |
+| **Window** | **Room** | Functional work areas for specific roles and functions |
+| **Pane** | **Desk** | Individual workspaces for concrete task execution |
+
+### Logical Hierarchy Management
+
+```
+Company
+├── Building         ← Logical management layer (tmux-independent)
+│   └── Floor        ← Logical management layer (tmux-independent)
+│       └── Room     ← tmux Window
+│           └── Desk ← tmux Pane
+```
+
+**Logical Management Layer Features:**
+- **Building**: Major project categories (Frontend Building, Backend Building, etc.)
+- **Floor**: Functional classifications (Development Floor, Testing Floor, Deploy Floor, etc.)
+- These layers are managed logically within haconiwa without direct tmux session mapping
+
+### Organization Structure Model
+
+```
+Organization
+├── PM (Project Manager)
+│   ├── Overall coordination
+│   ├── Task assignment
+│   └── Progress management
+└── Worker
+    ├── Worker-A (Development)
+    ├── Worker-B (Testing)
+    └── Worker-C (Deployment)
+```
+
+**Role Definitions:**
+- **PM (Boss)**: Strategic decision-making, resource management, quality assurance
+- **Worker**: Implementation, testing, deployment and other execution tasks
+- **Organization**: Logical team unit composed of multiple PMs/Workers
+
 ## 🚀 Installation
 
 ```bash
