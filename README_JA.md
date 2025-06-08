@@ -5,11 +5,20 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Development Status](https://img.shields.io/badge/status-alpha--development-red)](https://github.com/dai-motoki/haconiwa)
 
-**箱庭 (Haconiwa)** は、AI協調開発支援Python CLIツールです。tmuxセッション管理、git-worktree連携、タスク管理、AIエージェント調整機能を統合し、効率的な開発環境を提供する次世代ツールです。
+**箱庭 (Haconiwa)** は、AI協調開発支援Python CLIツールです。tmux会社管理、git-worktree連携、タスク管理、AIエージェント調整機能を統合し、効率的な開発環境を提供する次世代ツールです。
 
 > ⚠️ **注意**: このプロジェクトは現在活発に開発中です。機能やAPIは頻繁に変更される可能性があります。
 
 [🇺🇸 English README](README.md)
+
+## 📋 バージョン管理
+
+このプロジェクトは[Semantic Versioning](https://semver.org/lang/ja/)に従っています。
+
+- **📄 変更履歴**: [CHANGELOG.md](CHANGELOG.md) - 全てのバージョンの変更履歴
+- **🏷️ 最新バージョン**: 0.1.4
+- **📦 PyPI**: [haconiwa](https://pypi.org/project/haconiwa/)
+- **🔖 GitHubリリース**: [Releases](https://github.com/dai-motoki/haconiwa/releases)
 
 ## 🚀 今すぐ使える機能
 
@@ -23,38 +32,58 @@ pip install haconiwa
 
 # 2. マルチエージェント環境作成（4組織 × 4役割 = 16ペイン）
 haconiwa space multiagent --name my-project \
+  --base-path /path/to/workspace \
   --org01-name "フロントエンド開発部" --task01 "UI設計" \
   --org02-name "バックエンド開発部" --task02 "API開発" \
   --org03-name "データベース部門" --task03 "スキーマ設計" \
   --org04-name "DevOps部門" --task04 "インフラ構築"
 
-# 3. セッション一覧確認
+# 3. 会社一覧確認
 haconiwa space list
 
-# 4. 既存セッションに接続
+# 4. 既存の会社に接続
 haconiwa space attach my-project
 
-# 5. セッション設定更新（既存セッションの名前変更）
+# 5. 会社設定更新（既存会社の名前変更）
 haconiwa space multiagent --name my-project \
+  --base-path /path/to/workspace \
   --org01-name "新フロントエンド部" --task01 "React開発" \
   --no-attach
 
-# 6. セッション終了
+# 6. 会社終了
 haconiwa space kill my-project
+```
+
+**📁 自動作成されるディレクトリ構造:**
+```
+/path/to/workspace/
+├── org-01/
+│   ├── 01boss/          # PM用ワークスペース
+│   ├── 01worker-a/      # Worker-A用ワークスペース
+│   ├── 01worker-b/      # Worker-B用ワークスペース
+│   └── 01worker-c/      # Worker-C用ワークスペース
+├── org-02/
+│   ├── 02boss/
+│   ├── 02worker-a/
+│   ├── 02worker-b/
+│   └── 02worker-c/
+├── org-03/ (同様の構造)
+└── org-04/ (同様の構造)
 ```
 
 **✅ 実際に動作する機能:**
 - 🏢 **マルチエージェント環境**: 4x4（16ペイン）の組織的tmuxレイアウト
 - 📁 **自動ディレクトリ構成**: 組織・役割別ワークスペース自動作成
 - 🏷️ **カスタム組織名・タスク名**: 動的なタイトル設定
-- 🔄 **セッション更新**: 既存セッションの安全な設定変更
-- 📋 **セッション管理**: 作成・一覧・接続・削除の完全サポート
+- 🔄 **会社更新**: 既存会社の安全な設定変更
+- 📋 **会社管理**: 作成・一覧・接続・削除の完全サポート
+- 📄 **README自動生成**: 各ディレクトリにREADME.md自動作成
 
 ## ✨ 主な機能 (開発中)
 
 - 🤖 **AIエージェント管理**: Boss/Workerエージェントの作成・監視
 - 📦 **ワールド管理**: 開発環境の構築・管理
-- 🖥️ **tmuxセッション連携**: 開発スペースの効率的な管理
+- 🖥️ **tmux会社連携**: 開発スペースの効率的な管理
 - 📋 **タスク管理**: git-worktreeと連携したタスク管理システム
 - 📊 **リソース管理**: DBやファイルパスの効率的なスキャン
 - 👁️ **リアルタイム監視**: エージェントやタスクの進捗監視
@@ -82,7 +111,7 @@ Company（会社）
 **論理管理層の特徴：**
 - **Building**: プロジェクトの大分類（フロントエンド棟、バックエンド棟など）
 - **Floor**: 機能分類（開発フロア、テストフロア、デプロイフロアなど）
-- これらの層はtmuxセッションに直接対応せず、haconiwa内部で論理的に管理
+- これらの層はtmux会社に直接対応せず、haconiwa内部で論理的に管理
 
 ### 組織構成モデル
 
@@ -174,11 +203,11 @@ CLIツールは7つの主要コマンドグループを提供します：
 - `haconiwa resource scan` - リソーススキャン
 - `haconiwa resource list` - リソース一覧表示
 
-### `space` - tmuxスペースとセッション管理
+### `space` - tmuxスペースと会社管理
 tmuxを使った効率的な開発ワークスペース管理
-- `haconiwa space create <name>` - tmuxセッション作成
-- `haconiwa space list` - セッション一覧
-- `haconiwa space attach <name>` - セッション接続
+- `haconiwa space create <name>` - tmux会社作成
+- `haconiwa space list` - 会社一覧
+- `haconiwa space attach <name>` - 会社接続
 
 ### `task` - タスク管理コマンド
 git-worktreeと連携したタスク管理
@@ -211,7 +240,7 @@ git-worktreeと連携したタスク管理
 
 ### 🚧 開発中機能
 - AIエージェントの生成と管理 (プレースホルダー → 実装)
-- tmuxセッション統合 (プレースホルダー → 実装)
+- tmux会社統合 (プレースホルダー → 実装)
 - git-worktreeとのタスク管理 (プレースホルダー → 実装)
 - リソーススキャン機能 (プレースホルダー → 実装)
 - リアルタイム監視システム (プレースホルダー → 実装)
@@ -272,7 +301,7 @@ MIT License - 詳細は [LICENSE](LICENSE) ファイルをご覧ください。
 - 宣伝されている全機能の完全実装
 - AIエージェント協調機能
 - 開発ツールとの統合
-- 実際のタスクとセッション管理
+- 実際のタスクと会社管理
 
 現時点では本番環境での使用は推奨されません。これは意図されたユーザーエクスペリエンスを示す開発プレビューです。
 

@@ -5,11 +5,20 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Development Status](https://img.shields.io/badge/status-alpha--development-red)](https://github.com/dai-motoki/haconiwa)
 
-**Haconiwa (箱庭)** is an AI collaborative development support Python CLI tool. This next-generation tool integrates tmux session management, git-worktree integration, task management, and AI agent coordination to provide an efficient development environment.
+**Haconiwa (箱庭)** is an AI collaborative development support Python CLI tool. This next-generation tool integrates tmux company management, git-worktree integration, task management, and AI agent coordination to provide an efficient development environment.
 
 > ⚠️ **Note**: This project is currently under active development. Features and APIs may change frequently.
 
 [🇯🇵 日本語版 README](README_JA.md)
+
+## 📋 Version Management
+
+This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+- **📄 Changelog**: [CHANGELOG.md](CHANGELOG.md) - All version change history
+- **🏷️ Latest Version**: 0.1.4
+- **📦 PyPI**: [haconiwa](https://pypi.org/project/haconiwa/)
+- **🔖 GitHub Releases**: [Releases](https://github.com/dai-motoki/haconiwa/releases)
 
 ## 🚀 Ready-to-Use Features
 
@@ -23,38 +32,58 @@ pip install haconiwa
 
 # 2. Create multi-agent environment (4 organizations × 4 roles = 16 panes)
 haconiwa space multiagent --name my-project \
+  --base-path /path/to/workspace \
   --org01-name "Frontend Development" --task01 "UI Design" \
   --org02-name "Backend Development" --task02 "API Development" \
   --org03-name "Database Team" --task03 "Schema Design" \
   --org04-name "DevOps Team" --task04 "Infrastructure"
 
-# 3. List sessions
+# 3. List companies
 haconiwa space list
 
-# 4. Attach to existing session
+# 4. Attach to existing company
 haconiwa space attach my-project
 
-# 5. Update session settings (rename existing session)
+# 5. Update company settings (rename existing company)
 haconiwa space multiagent --name my-project \
+  --base-path /path/to/workspace \
   --org01-name "New Frontend Team" --task01 "React Development" \
   --no-attach
 
-# 6. Terminate session
+# 6. Terminate company
 haconiwa space kill my-project
+```
+
+**📁 Auto-created Directory Structure:**
+```
+/path/to/workspace/
+├── org-01/
+│   ├── 01boss/          # PM workspace
+│   ├── 01worker-a/      # Worker-A workspace
+│   ├── 01worker-b/      # Worker-B workspace
+│   └── 01worker-c/      # Worker-C workspace
+├── org-02/
+│   ├── 02boss/
+│   ├── 02worker-a/
+│   ├── 02worker-b/
+│   └── 02worker-c/
+├── org-03/ (same structure)
+└── org-04/ (same structure)
 ```
 
 **✅ Actually Working Features:**
 - 🏢 **Multi-Agent Environment**: 4x4 (16 panes) organizational tmux layout
 - 📁 **Auto Directory Structure**: Automatic workspace creation by organization/role
 - 🏷️ **Custom Organization & Task Names**: Dynamic title configuration
-- 🔄 **Session Updates**: Safe configuration changes for existing sessions
-- 📋 **Session Management**: Complete support for create/list/attach/delete
+- 🔄 **Company Updates**: Safe configuration changes for existing companies
+- 📋 **Company Management**: Complete support for create/list/attach/delete
+- 📄 **Auto README Generation**: Automatic README.md creation in each directory
 
 ## ✨ Key Features (In Development)
 
 - 🤖 **AI Agent Management**: Create and monitor Boss/Worker agents
 - 📦 **World Management**: Build and manage development environments  
-- 🖥️ **tmux Session Integration**: Efficient development space management
+- 🖥️ **tmux Company Integration**: Efficient development space management
 - 📋 **Task Management**: Task management system integrated with git-worktree
 - 📊 **Resource Management**: Efficient scanning of databases and file paths
 - 👁️ **Real-time Monitoring**: Progress monitoring of agents and tasks
@@ -82,7 +111,7 @@ Company
 **Logical Management Layer Features:**
 - **Building**: Major project categories (Frontend Building, Backend Building, etc.)
 - **Floor**: Functional classifications (Development Floor, Testing Floor, Deploy Floor, etc.)
-- These layers are managed logically within haconiwa without direct tmux session mapping
+- These layers are managed logically within haconiwa without direct tmux company mapping
 
 ### Organization Structure Model
 
@@ -174,11 +203,11 @@ Scan and manage project resources (databases, files, etc.)
 - `haconiwa resource scan` - Scan resources
 - `haconiwa resource list` - List resources
 
-### `space` - Manage tmux Spaces and Sessions
+### `space` - Manage tmux Spaces and Companies
 Efficient development workspace management via tmux
-- `haconiwa space create <name>` - Create tmux session
-- `haconiwa space list` - List sessions
-- `haconiwa space attach <name>` - Attach to session
+- `haconiwa space create <name>` - Create tmux company
+- `haconiwa space list` - List companies
+- `haconiwa space attach <name>` - Attach to company
 
 ### `task` - Task Management Commands
 Task management integrated with git-worktree
@@ -211,7 +240,7 @@ Development environment and world management
 
 ### 🚧 In Development
 - AI agent spawning and management (placeholder → real implementation)
-- tmux session integration (placeholder → real implementation)
+- tmux company integration (placeholder → real implementation)
 - Task management with git-worktree (placeholder → real implementation)
 - Resource scanning functionality (placeholder → real implementation)
 - Real-time monitoring system (placeholder → real implementation)
@@ -272,7 +301,7 @@ This project is in early alpha development and **demonstration phase**. Current 
 - Full implementation of all advertised features
 - AI agent coordination functionality  
 - Integration with development tools
-- Real task and session management
+- Real task and company management
 
 Use in production environments is not recommended at this time. This is a development preview showcasing the intended user experience.
 

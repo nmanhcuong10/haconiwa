@@ -1,26 +1,58 @@
 #!/bin/bash
 
+# Haconiwa Release Script
+# Usage: ./scripts/release.sh <version>
+# Example: ./scripts/release.sh 0.1.5
+
 set -e
 
-# バージョン番号の更新確認
-VERSION=$(python -c "import toml; print(toml.load('src/pyproject.toml')['tool']['poetry']['version'])")
-echo "Current version: $VERSION"
+VERSION=$1
+if [ -z "$VERSION" ]; then
+    echo "❌ Usage: $0 <version>"
+    echo "📝 Example: $0 0.1.5"
+    exit 1
+fi
 
-# テストスイートの実行
-pytest
+echo "🚀 Starting release process for version $VERSION"
 
-# パッケージビルド
+# Update version in pyproject.toml
+echo "📝 Updating pyproject.toml version to $VERSION"
+sed -i '' "s/version = \".*\"/version = \"$VERSION\"/" pyproject.toml
+
+# Update latest version in README files
+echo "📝 Updating README files with latest version"
+sed -i '' "s/最新バージョン**: .*/最新バージョン**: $VERSION/" README_JA.md
+sed -i '' "s/Latest Version**: .*/Latest Version**: $VERSION/" README.md
+
+# Build package
+echo "📦 Building package"
+rm -rf dist/ build/ src/*.egg-info
 python -m build
 
-# twine による PyPI アップロード
-twine upload dist/*
+# Upload to PyPI
+echo "🔄 Uploading to PyPI"
+python -m twine upload dist/*
 
-# Git タグの作成とプッシュ
-git tag "v$VERSION"
+# Git operations
+echo "📋 Committing changes"
+git add .
+git commit -m "chore: release v$VERSION
+
+- Update version in pyproject.toml
+- Update README with latest version
+- Build and upload to PyPI"
+
+echo "🏷️ Creating Git tag"
+git tag -a "v$VERSION" -m "Release v$VERSION
+
+See CHANGELOG.md for details."
+
+echo "🚀 Pushing changes and tags"
+git push origin main
 git push origin "v$VERSION"
 
-# GitHub リリースの作成
-gh release create "v$VERSION" --title "Release $VERSION" --notes "Release notes for version $VERSION" dist/*
-
-# リリースノートの生成
-echo "Release $VERSION has been created successfully."
+echo "✅ Release v$VERSION completed successfully!"
+echo "📝 Next steps:"
+echo "   1. Create GitHub Release at: https://github.com/dai-motoki/haconiwa/releases/new"
+echo "   2. Update CHANGELOG.md with new version details"
+echo "   3. Verify PyPI release at: https://pypi.org/project/haconiwa/$VERSION/"
