@@ -30,6 +30,14 @@
 # 1. インストール
 pip install haconiwa --upgrade
 
+
+# 2-1. 直接Tmuxでアタッチする場合はこちらを実行してください（4組織 × 4役割 = 16ペイン）。
+haconiwa company build --name my-company \
+  --org01-name "フロントエンド開発部" --task01 "UI設計" \
+  --org02-name "バックエンド開発部" --task02 "API開発" \
+  --org03-name "データベース部門" --task03 "スキーマ設計" \
+  --org04-name "DevOps部門" --task04 "インフラ構築"
+
 # 2. マルチエージェント環境作成（4組織 × 4役割 = 16ペイン）
 haconiwa company build --name my-company \
   --org01-name "フロントエンド開発部" --task01 "UI設計" \
