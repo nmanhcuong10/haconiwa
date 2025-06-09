@@ -97,6 +97,10 @@ def init(
 def apply(
     file: str = typer.Option(..., "-f", "--file", help="YAML ファイルパス"),
     dry_run: bool = typer.Option(False, "--dry-run", help="適用をシミュレート"),
+    force_clone: bool = typer.Option(False, "--force-clone", help="既存ディレクトリを確認なしで削除してGitクローン"),
+    attach: bool = typer.Option(False, "--attach", help="適用後に自動でセッションにアタッチ"),
+    no_attach: bool = typer.Option(False, "--no-attach", help="適用後にセッションにアタッチしない（明示的指定）"),
+    room: str = typer.Option("room-01", "-r", "--room", help="アタッチするルーム（--attachと併用）"),
 ):
     """CRD定義ファイルを適用"""
     file_path = Path(file)
@@ -105,11 +109,26 @@ def apply(
         typer.echo(f"❌ File not found: {file}", err=True)
         raise typer.Exit(1)
     
+    # Handle attach/no-attach logic
+    if attach and no_attach:
+        typer.echo("❌ Cannot specify both --attach and --no-attach", err=True)
+        raise typer.Exit(1)
+    
+    # Set final attach behavior
+    should_attach = attach and not no_attach
+    
     parser = CRDParser()
     applier = CRDApplier()
     
+    # Set force_clone flag in applier
+    applier.force_clone = force_clone
+    
     if dry_run:
         typer.echo("🔍 Dry run mode - no changes will be applied")
+        if should_attach:
+            typer.echo(f"🔗 Would attach to session after apply (room: {room})")
+    
+    created_sessions = []  # Track created sessions for attach
     
     try:
         # Check if file contains multiple documents
@@ -125,9 +144,18 @@ def apply(
                 results = applier.apply_multiple(crds)
                 success_count = sum(results)
                 typer.echo(f"✅ Applied {success_count}/{len(crds)} resources successfully")
+                
+                # Extract session names from applied Space CRDs
+                for i, (crd, result) in enumerate(zip(crds, results)):
+                    if result and crd.kind == "Space":
+                        session_name = crd.spec.nations[0].cities[0].villages[0].companies[0].name
+                        created_sessions.append(session_name)
             else:
                 for crd in crds:
                     typer.echo(f"  - {crd.kind}: {crd.metadata.name}")
+                    if crd.kind == "Space":
+                        session_name = crd.spec.nations[0].cities[0].villages[0].companies[0].name
+                        created_sessions.append(session_name)
         else:
             # Single document
             crd = parser.parse_file(file_path)
@@ -137,9 +165,56 @@ def apply(
                 success = applier.apply(crd)
                 if success:
                     typer.echo("✅ Applied 1 resource successfully")
+                    
+                    # Extract session name for Space CRD
+                    if crd.kind == "Space":
+                        session_name = crd.spec.nations[0].cities[0].villages[0].companies[0].name
+                        created_sessions.append(session_name)
                 else:
                     typer.echo("❌ Failed to apply resource", err=True)
                     raise typer.Exit(1)
+            else:
+                if crd.kind == "Space":
+                    session_name = crd.spec.nations[0].cities[0].villages[0].companies[0].name
+                    created_sessions.append(session_name)
+        
+        # Auto-attach to session if requested
+        if should_attach and created_sessions and not dry_run:
+            session_name = created_sessions[0]  # Attach to first created session
+            typer.echo(f"\n🔗 Auto-attaching to session: {session_name} (room: {room})")
+            
+            # Import subprocess for tmux attach
+            import subprocess
+            import os
+            
+            try:
+                # Check if session exists
+                result = subprocess.run(['tmux', 'has-session', '-t', session_name], 
+                                       capture_output=True, text=True)
+                if result.returncode != 0:
+                    typer.echo(f"❌ Session '{session_name}' not found for attach", err=True)
+                    raise typer.Exit(1)
+                
+                # Switch to specific room first
+                space_manager = SpaceManager()
+                space_manager.switch_to_room(session_name, room)
+                
+                # Attach to session (this will transfer control to tmux)
+                typer.echo(f"🚀 Attaching to {session_name}/{room}...")
+                typer.echo("💡 Press Ctrl+B then D to detach from tmux session")
+                
+                # Use execvp to replace current process with tmux attach
+                os.execvp('tmux', ['tmux', 'attach-session', '-t', session_name])
+                
+            except FileNotFoundError:
+                typer.echo("❌ tmux is not installed or not found in PATH", err=True)
+                raise typer.Exit(1)
+            except Exception as e:
+                typer.echo(f"❌ Failed to attach to session: {e}", err=True)
+                raise typer.Exit(1)
+        
+        elif should_attach and not created_sessions:
+            typer.echo("⚠️ No Space sessions created, cannot attach")
     
     except CRDValidationError as e:
         typer.echo(f"❌ Validation error: {e}", err=True)
@@ -167,6 +242,11 @@ def space_list():
     typer.echo("📋 Active Spaces:")
     for space in spaces:
         typer.echo(f"  🏢 {space['name']} - {space['status']} ({space['panes']} panes, {space['rooms']} rooms)")
+
+@space_app.command("list")
+def space_list_alias():
+    """Space一覧を表示 (lsのalias)"""
+    space_list()
 
 @space_app.command("start")
 def space_start(
@@ -223,6 +303,213 @@ def space_clone(
         typer.echo(f"✅ Cloned repository for: {company}")
     else:
         typer.echo(f"❌ Failed to clone repository for: {company}", err=True)
+        raise typer.Exit(1)
+
+@space_app.command("run")
+def space_run(
+    company: str = typer.Option(..., "-c", "--company", help="Company name"),
+    command: str = typer.Option(None, "--cmd", help="Command to run in all panes"),
+    claude_code: bool = typer.Option(False, "--claude-code", help="Run 'claude' command in all panes"),
+    room: str = typer.Option(None, "-r", "--room", help="Target specific room (default: all rooms)"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be executed without running"),
+    confirm: bool = typer.Option(True, "--confirm/--no-confirm", help="Ask for confirmation before execution")
+):
+    """全ペインまたは指定ルームでコマンドを実行"""
+    
+    # Determine command to run
+    if claude_code:
+        actual_command = "claude"
+    elif command:
+        actual_command = command
+    else:
+        typer.echo("❌ Either --cmd or --claude-code must be specified", err=True)
+        raise typer.Exit(1)
+    
+    # Import subprocess for tmux interaction
+    import subprocess
+    
+    # Check if session exists
+    try:
+        result = subprocess.run(['tmux', 'has-session', '-t', company], 
+                               capture_output=True, text=True)
+        if result.returncode != 0:
+            typer.echo(f"❌ Company session '{company}' not found", err=True)
+            raise typer.Exit(1)
+    except FileNotFoundError:
+        typer.echo("❌ tmux is not installed or not found in PATH", err=True)
+        raise typer.Exit(1)
+    
+    # Get list of panes
+    try:
+        if room:
+            # Get panes for specific room (window)
+            space_manager = SpaceManager()
+            window_id = space_manager._get_window_id_for_room(room)
+            result = subprocess.run(['tmux', 'list-panes', '-t', f'{company}:{window_id}', '-F', 
+                                   '#{window_index}:#{pane_index}'], 
+                                   capture_output=True, text=True)
+            target_desc = f"room {room} (window {window_id})"
+        else:
+            # Get all panes in session
+            result = subprocess.run(['tmux', 'list-panes', '-t', company, '-F', 
+                                   '#{window_index}:#{pane_index}', '-a'], 
+                                   capture_output=True, text=True)
+            target_desc = "all rooms"
+        
+        if result.returncode != 0:
+            typer.echo(f"❌ Failed to get panes: {result.stderr}", err=True)
+            raise typer.Exit(1)
+        
+        panes = [line.strip() for line in result.stdout.strip().split('\n') if line.strip()]
+        
+        if not panes:
+            typer.echo(f"❌ No panes found in {target_desc}", err=True)
+            raise typer.Exit(1)
+        
+        typer.echo(f"🎯 Target: {company} ({target_desc})")
+        typer.echo(f"📊 Found {len(panes)} panes")
+        typer.echo(f"🚀 Command: {actual_command}")
+        
+        if dry_run:
+            typer.echo("\n🔍 Dry run - Commands that would be executed:")
+            for i, pane in enumerate(panes[:5]):  # Show first 5
+                typer.echo(f"  Pane {pane}: tmux send-keys -t {company}:{pane} '{actual_command}' Enter")
+            if len(panes) > 5:
+                typer.echo(f"  ... and {len(panes) - 5} more panes")
+            return
+        
+        # Confirmation
+        if confirm:
+            confirm_msg = f"Execute '{actual_command}' in {len(panes)} panes of {company}?"
+            if not typer.confirm(confirm_msg):
+                typer.echo("❌ Operation cancelled")
+                raise typer.Exit(0)
+        
+        # Execute command in all panes
+        typer.echo(f"\n🚀 Executing '{actual_command}' in {len(panes)} panes...")
+        
+        failed_panes = []
+        for i, pane in enumerate(panes):
+            try:
+                # Send command to pane
+                cmd = ['tmux', 'send-keys', '-t', f'{company}:{pane}', actual_command, 'Enter']
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+                
+                if result.returncode == 0:
+                    typer.echo(f"  ✅ Pane {pane}: Command sent")
+                else:
+                    typer.echo(f"  ❌ Pane {pane}: Failed - {result.stderr}")
+                    failed_panes.append(pane)
+                    
+            except subprocess.TimeoutExpired:
+                typer.echo(f"  ⏱️ Pane {pane}: Timeout")
+                failed_panes.append(pane)
+            except Exception as e:
+                typer.echo(f"  ❌ Pane {pane}: Error - {e}")
+                failed_panes.append(pane)
+        
+        # Summary
+        success_count = len(panes) - len(failed_panes)
+        typer.echo(f"\n📊 Execution completed: {success_count}/{len(panes)} panes successful")
+        
+        if failed_panes:
+            typer.echo(f"❌ Failed panes: {', '.join(failed_panes)}")
+            raise typer.Exit(1)
+        else:
+            typer.echo("✅ All panes executed successfully")
+            
+    except Exception as e:
+        typer.echo(f"❌ Error executing command: {e}", err=True)
+        raise typer.Exit(1)
+
+@space_app.command("delete")
+def space_delete(
+    company: str = typer.Option(..., "-c", "--company", help="Company name"),
+    clean_dirs: bool = typer.Option(False, "--clean-dirs", help="Remove related directories"),
+    force: bool = typer.Option(False, "--force", help="Force delete without confirmation")
+):
+    """Company セッションとリソースを削除"""
+    
+    # Import subprocess for tmux interaction
+    import subprocess
+    import shutil
+    
+    # Check if session exists
+    try:
+        result = subprocess.run(['tmux', 'has-session', '-t', company], 
+                               capture_output=True, text=True)
+        session_exists = result.returncode == 0
+    except FileNotFoundError:
+        typer.echo("❌ tmux is not installed or not found in PATH", err=True)
+        raise typer.Exit(1)
+    
+    if not session_exists:
+        typer.echo(f"⚠️ Company session '{company}' not found")
+        if not clean_dirs:
+            typer.echo("💡 Use --clean-dirs to clean up directories anyway")
+            return
+    
+    # Confirmation
+    if not force:
+        operations = []
+        if session_exists:
+            operations.append(f"Kill tmux session: {company}")
+        if clean_dirs:
+            operations.append(f"Remove directories: ./{company}")
+        
+        if operations:
+            typer.echo("This will:")
+            for op in operations:
+                typer.echo(f"  - {op}")
+            
+            if not typer.confirm("Are you sure you want to proceed?"):
+                typer.echo("❌ Operation cancelled")
+                raise typer.Exit(0)
+    
+    try:
+        # Kill tmux session
+        if session_exists:
+            result = subprocess.run(['tmux', 'kill-session', '-t', company], 
+                                   capture_output=True, text=True)
+            if result.returncode == 0:
+                typer.echo(f"✅ Killed tmux session: {company}")
+            else:
+                typer.echo(f"❌ Failed to kill session: {result.stderr}", err=True)
+        
+        # Clean directories
+        if clean_dirs:
+            dirs_to_clean = [
+                f"./{company}",
+                f"./{company}-desks",
+                f"./test-{company}",
+                f"./test-{company}-desks"
+            ]
+            
+            cleaned_dirs = []
+            for dir_path in dirs_to_clean:
+                if Path(dir_path).exists():
+                    try:
+                        shutil.rmtree(dir_path)
+                        cleaned_dirs.append(dir_path)
+                        typer.echo(f"✅ Removed directory: {dir_path}")
+                    except Exception as e:
+                        typer.echo(f"❌ Failed to remove {dir_path}: {e}", err=True)
+            
+            if cleaned_dirs:
+                typer.echo(f"🗑️ Cleaned {len(cleaned_dirs)} directories")
+            else:
+                typer.echo("ℹ️ No directories found to clean")
+        
+        # Remove from SpaceManager tracking
+        space_manager = SpaceManager()
+        if hasattr(space_manager, 'active_sessions') and company in space_manager.active_sessions:
+            del space_manager.active_sessions[company]
+            typer.echo(f"✅ Removed from space tracking: {company}")
+        
+        typer.echo(f"✅ Successfully deleted company: {company}")
+        
+    except Exception as e:
+        typer.echo(f"❌ Error during deletion: {e}", err=True)
         raise typer.Exit(1)
 
 # =====================================================================

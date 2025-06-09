@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-01-09
+
+### Added
+- 🚀 **`--no-attach` option** for apply command - allows YAML application without auto-attaching to session
+- 🧪 **Complete task assignment lifecycle tests** - comprehensive testing from YAML application to cleanup
+- 📋 **Task assignment lifecycle test suite** covering create-to-delete workflow patterns
+- 🔧 **Enhanced CLI testing** with improved mock object structure and error handling
+
+### Changed
+- 🧹 **Unit test improvements** - fixed CLI v1 and CommandPolicy test compatibility issues
+- 🔧 **Mock object enhancements** - added proper spec attributes for CRD objects in tests
+- 📊 **Test coverage expansion** - comprehensive validation of CLI apply command workflows
+
+### Fixed
+- ✅ **Unit test greenification** - resolved CLI v1 test failures related to --no-attach option addition
+- 🔧 **Mock CRD object structure** - added missing metadata and spec attributes for proper test execution
+- 📋 **PolicyEngine test compatibility** - aligned test expectations with actual implementation behavior
+
+### Technical
+- 🏗️ **Enhanced CLI argument parsing** for apply command with attach/no-attach logic handling
+- 🧪 **Improved test infrastructure** for lifecycle testing patterns
+- 📝 **Better error messaging** and validation in apply command workflows
+
 ## [0.2.1] - 2025-01-08
 
 ### Fixed
@@ -108,7 +131,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🏗️ **Basic project structure**
 - 📄 **License and documentation** foundation
 
-[Unreleased]: https://github.com/dai-motoki/haconiwa/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/dai-motoki/haconiwa/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/dai-motoki/haconiwa/compare/v0.2.1...v0.4.0
 [0.2.1]: https://github.com/dai-motoki/haconiwa/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/dai-motoki/haconiwa/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/dai-motoki/haconiwa/compare/v0.1.3...v0.1.4

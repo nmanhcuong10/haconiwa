@@ -16,13 +16,105 @@
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **📄 Changelog**: [CHANGELOG.md](CHANGELOG.md) - All version change history
-- **🏷️ Latest Version**: 0.3.0
+- **🏷️ Latest Version**: 0.4.0
 - **📦 PyPI**: [haconiwa](https://pypi.org/project/haconiwa/)
 - **🔖 GitHub Releases**: [Releases](https://github.com/dai-motoki/haconiwa/releases)
 
 ## 🚀 Ready-to-Use Features
 
-### tmux Multi-Agent Environment (Implemented)
+### apply yaml Pattern (v1.0 New Feature)
+
+Declarative YAML file-based multiroom multi-agent environment management is available **right now**:
+
+```bash
+# 1. Installation
+pip install haconiwa --upgrade
+
+# 2. Download YAML file (directly from GitHub)
+wget https://raw.githubusercontent.com/dai-motoki/haconiwa/main/haconiwa-multiroom-test.yaml
+
+# Or download with curl
+curl -O https://raw.githubusercontent.com/dai-motoki/haconiwa/main/haconiwa-multiroom-test.yaml
+
+# Check file contents
+cat haconiwa-multiroom-test.yaml
+
+# 3. Apply YAML to create multiroom environment
+haconiwa apply -f haconiwa-multiroom-test.yaml
+
+# 4. List spaces
+haconiwa space list
+
+# 5. List spaces (short form)
+haconiwa space ls
+
+# 6. Attach to specific room
+haconiwa space attach -c test-multiroom-company -r room-01
+
+# 7. Execute claude command on all panes
+haconiwa space run -c test-multiroom-company --claude-code
+
+# 8. Execute custom command on specific room
+haconiwa space run -c test-multiroom-company --cmd "echo hello" -r room-01
+
+# 9. Dry-run to check commands
+haconiwa space run -c test-multiroom-company --claude-code --dry-run
+
+# 10. Stop session
+haconiwa space stop -c test-multiroom-company
+
+# 11. Complete deletion (delete directories too)
+haconiwa space delete -c test-multiroom-company --clean-dirs --force
+
+# 12. Complete deletion (keep directories)
+haconiwa space delete -c test-multiroom-company --force
+```
+
+**📁 Auto-created Multiroom Structure:**
+```
+./test-multiroom-desks/
+├── standby/                 # Standby agents (26 agents)
+│   └── README.md           # Auto-generated explanation file
+└── tasks/                  # Task-assigned agents (6 agents)
+    ├── main/               # Main Git repository
+    ├── 20250609061748_frontend-ui-design_01/     # Task 1
+    ├── 20250609061749_backend-api-development_02/ # Task 2
+    ├── 20250609061750_database-schema-design_03/  # Task 3
+    ├── 20250609061751_devops-ci-cd-pipeline_04/   # Task 4
+    ├── 20250609061752_user-authentication_05/     # Task 5
+    └── 20250609061753_performance-optimization_06/ # Task 6
+```
+
+**🏢 tmux Structure (Multiroom):**
+```
+test-multiroom-company (Session)
+├── Window 0: Alpha Room (16 panes)
+│   ├── org-01 (4 panes): pm, worker-a, worker-b, worker-c
+│   ├── org-02 (4 panes): pm, worker-a, worker-b, worker-c  
+│   ├── org-03 (4 panes): pm, worker-a, worker-b, worker-c
+│   └── org-04 (4 panes): pm, worker-a, worker-b, worker-c
+└── Window 1: Beta Room (16 panes)
+    ├── org-01 (4 panes): pm, worker-a, worker-b, worker-c
+    ├── org-02 (4 panes): pm, worker-a, worker-b, worker-c
+    ├── org-03 (4 panes): pm, worker-a, worker-b, worker-c
+    └── org-04 (4 panes): pm, worker-a, worker-b, worker-c
+```
+
+**✅ YAML Apply Pattern Actual Features:**
+- 🏢 **Declarative Management**: Environment definition via YAML files
+- 🤖 **Multiroom Support**: Window separation by room units
+- 🔄 **Auto Room Distribution**: Pane arrangement per room windows
+- 🚀 **Bulk Command Execution**: All panes or room-specific execution
+- 🎯 **Flexible Targeting**: Room-specific command execution
+- 🏛️ **Hierarchical Management**: Nation > City > Village > Company
+- 📄 **External Configuration**: Complete management via YAML configuration files
+- 🗑️ **Flexible Cleanup**: Choice of directory retention or deletion
+- 📊 **32 Pane Management**: 2 rooms × 16 panes configuration
+- 🔧 **Dry-run Support**: Command verification before execution
+- 🎯 **Task Assignment System**: Automatic agent directory movement
+- 📋 **Log File Management**: Assignment records via agent_assignment.json
+
+### tmux Multi-Agent Environment (Traditional Method)
 
 Create and manage a 4x4 grid multi-agent development environment **right now**:
 

@@ -2,7 +2,7 @@
 CRD Applier for Haconiwa v1.0
 """
 
-from typing import Union, List
+from typing import Union, List, Dict
 from pathlib import Path
 import logging
 
@@ -23,6 +23,7 @@ class CRDApplier:
     
     def __init__(self):
         self.applied_resources = {}
+        self.force_clone = False  # Default to False
     
     def apply(self, crd: Union[SpaceCRD, AgentCRD, TaskCRD, PathScanCRD, DatabaseCRD, CommandPolicyCRD]) -> bool:
         """Apply CRD to the system"""
@@ -48,14 +49,111 @@ class CRDApplier:
     def apply_multiple(self, crds: List[Union[SpaceCRD, AgentCRD, TaskCRD, PathScanCRD, DatabaseCRD, CommandPolicyCRD]]) -> List[bool]:
         """Apply multiple CRDs to the system"""
         results = []
+        space_sessions = []  # Track space sessions for post-processing
+        
         for crd in crds:
             try:
                 result = self.apply(crd)
                 results.append(result)
+                
+                # Track Space CRDs for later pane updates
+                if isinstance(crd, SpaceCRD) and result:
+                    # Extract session name from Space CRD
+                    company = crd.spec.nations[0].cities[0].villages[0].companies[0]
+                    space_sessions.append({
+                        "session_name": company.name,
+                        "space_ref": company.name
+                    })
+                    
             except Exception as e:
                 logger.error(f"Failed to apply CRD {crd.metadata.name}: {e}")
                 results.append(False)
+        
+        # IMPORTANT: Re-update task assignments for all spaces after all CRDs are applied
+        # This fixes the timing issue where SpaceCRD is applied before TaskCRDs
+        if space_sessions:
+            logger.info("Re-updating task assignments after all CRDs are applied...")
+            self._update_all_space_task_assignments(space_sessions)
+        
+        # Update agent pane directories for all spaces after all CRDs are applied
+        self._update_all_agent_pane_directories(space_sessions)
+        
         return results
+    
+    def _update_all_agent_pane_directories(self, space_sessions: List[Dict[str, str]]):
+        """Update agent pane directories for all space sessions"""
+        if not space_sessions:
+            return
+        
+        try:
+            logger.info("🎯 Using new log-file based agent assignment (TaskManager pattern matching disabled)")
+            
+            # Import SpaceManager to call the new log-based update method
+            from ..space.manager import SpaceManager
+            space_manager = SpaceManager()
+            
+            total_updated = 0
+            
+            for space_info in space_sessions:
+                session_name = space_info["session_name"]
+                space_ref = space_info["space_ref"]
+                
+                logger.info(f"🔄 Running log-based pane update for space: {space_ref}")
+                
+                # Use SpaceManager's new log-based update method
+                updated_count = space_manager.update_all_panes_from_task_logs(session_name, space_ref)
+                total_updated += updated_count
+                
+                if updated_count > 0:
+                    logger.info(f"✅ Updated {updated_count} agent panes for space: {space_ref}")
+                else:
+                    logger.info(f"ℹ️ No task assignments found for space: {space_ref}")
+                
+            logger.info(f"🎉 Total agent panes updated across all spaces: {total_updated}")
+                
+        except Exception as e:
+            logger.error(f"Failed to coordinate agent pane directories: {e}")
+    
+    def _update_all_space_task_assignments(self, space_sessions: List[Dict[str, str]]):
+        """Re-update task assignments for all space sessions after all CRDs are applied"""
+        try:
+            from ..task.manager import TaskManager
+            from ..space.manager import SpaceManager
+            
+            task_manager = TaskManager()
+            
+            for space_info in space_sessions:
+                session_name = space_info["session_name"]
+                space_ref = space_info["space_ref"]
+                
+                # Get all task assignments for this space
+                task_assignments = {}
+                for task_name, task_data in task_manager.tasks.items():
+                    assignee = task_data["config"].get("assignee")
+                    task_space_ref = task_data["config"].get("space_ref")
+                    if assignee and task_space_ref == space_ref:
+                        task_assignments[assignee] = {
+                            "name": task_name,
+                            "worktree_path": f"tasks/{task_name}",
+                            "config": task_data["config"]
+                        }
+                
+                logger.info(f"Re-updating task assignments for space {space_ref}: {len(task_assignments)} tasks")
+                for assignee, task_info in task_assignments.items():
+                    logger.info(f"  {assignee} → {task_info['name']}")
+                
+                # Find and update the SpaceManager instance for this session
+                # We need to get the SpaceManager instance that created this session
+                # For now, we'll create a new one and set the task assignments
+                space_manager = SpaceManager()
+                space_manager.set_task_assignments(task_assignments)
+                
+                # Store the updated task assignments in active_sessions if available
+                if session_name in space_manager.active_sessions:
+                    space_manager.active_sessions[session_name]["task_assignments"] = task_assignments
+                    
+        except Exception as e:
+            logger.error(f"Failed to re-update task assignments: {e}")
     
     def _apply_space_crd(self, crd: SpaceCRD) -> bool:
         """Apply Space CRD"""
@@ -76,22 +174,37 @@ class CRDApplier:
             # Handle Git repository if specified
             if config.get("git_repo"):
                 git_config = config["git_repo"]
-                logger.info(f"Git repository specified: {git_config['url']}")
-                
-                # Check if repository needs to be cloned
-                base_path = Path(config["base_path"])
-                git_dir = base_path / ".git"
-                
-                if not git_dir.exists():
-                    logger.info(f"Cloning repository to {base_path}")
-                    success = self._clone_repository(git_config, base_path)
-                    if not success:
-                        logger.warning("Failed to clone repository, continuing without Git")
-                else:
-                    logger.info("Repository already exists, skipping clone")
+                logger.info(f"Git repository specified: {git_config['url']} (will be handled by SpaceManager)")
             
-            # Create space infrastructure (32-pane tmux session)
-            logger.info("Creating 32-pane tmux session...")
+            # IMPORTANT: Get TaskManager tasks and pass to SpaceManager for agent assignment
+            from ..task.manager import TaskManager
+            task_manager = TaskManager()
+            
+            # Pass task assignments to SpaceManager
+            task_assignments = {}
+            for task_name, task_data in task_manager.tasks.items():
+                assignee = task_data["config"].get("assignee")
+                space_ref = task_data["config"].get("space_ref")
+                if assignee and space_ref == config['name']:
+                    task_assignments[assignee] = {
+                        "name": task_name,
+                        "worktree_path": f"tasks/{task_name}",
+                        "config": task_data["config"]
+                    }
+            
+            logger.info(f"Passing {len(task_assignments)} task assignments to SpaceManager")
+            for assignee, task_info in task_assignments.items():
+                logger.info(f"  {assignee} → {task_info['name']}")
+            
+            # Set task assignments in SpaceManager
+            space_manager.set_task_assignments(task_assignments)
+            
+            # Create space infrastructure (32-pane tmux session with task-centric structure)
+            logger.info("Creating 32-pane tmux session with tasks/ directory structure...")
+            
+            # Pass force_clone flag to SpaceManager
+            space_manager._force_clone = self.force_clone
+            
             result = space_manager.create_multiroom_session(config)
             
             if result:
@@ -100,6 +213,7 @@ class CRDApplier:
                 logger.info(f"   🖥️ Session: {config['name']} (32 panes)")
                 logger.info(f"   🏢 Organizations: {len(config.get('organizations', []))}")
                 logger.info(f"   🚪 Rooms: {len(config.get('rooms', []))}")
+                logger.info(f"   🎯 Agent assignments: {len(task_assignments)}")
             else:
                 logger.error(f"❌ Failed to apply Space CRD {crd.metadata.name}")
             
@@ -107,37 +221,6 @@ class CRDApplier:
             
         except Exception as e:
             logger.error(f"Exception while applying Space CRD {crd.metadata.name}: {e}")
-            return False
-    
-    def _clone_repository(self, git_config: dict, base_path: Path) -> bool:
-        """Clone Git repository"""
-        try:
-            import subprocess
-            
-            # Create parent directory
-            base_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Prepare clone command
-            url = git_config["url"]
-            auth = git_config.get("auth", "https")
-            
-            cmd = ["git", "clone", url, str(base_path)]
-            
-            # Execute clone
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-            
-            if result.returncode == 0:
-                logger.info(f"Successfully cloned repository from {url}")
-                return True
-            else:
-                logger.error(f"Failed to clone repository: {result.stderr}")
-                return False
-                
-        except subprocess.TimeoutExpired:
-            logger.error("Git clone operation timed out")
-            return False
-        except Exception as e:
-            logger.error(f"Error during git clone: {e}")
             return False
     
     def _apply_agent_crd(self, crd: AgentCRD) -> bool:
@@ -176,7 +259,7 @@ class CRDApplier:
         
         # Import task manager here to avoid circular import
         from ..task.manager import TaskManager
-        task_manager = TaskManager()
+        task_manager = TaskManager()  # This will get the singleton instance
         
         # Create task configuration
         task_config = {

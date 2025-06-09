@@ -16,13 +16,105 @@
 このプロジェクトは[Semantic Versioning](https://semver.org/lang/ja/)に従っています。
 
 - **📄 変更履歴**: [CHANGELOG.md](CHANGELOG.md) - 全てのバージョンの変更履歴
-- **🏷️ 最新バージョン**: 0.3.0
+- **🏷️ 最新バージョン**: 0.4.0
 - **📦 PyPI**: [haconiwa](https://pypi.org/project/haconiwa/)
 - **🔖 GitHubリリース**: [Releases](https://github.com/dai-motoki/haconiwa/releases)
 
 ## 🚀 今すぐ使える機能
 
-### tmux マルチエージェント環境（実装済み）
+### apply yamlパターン（v1.0 新機能）
+
+宣言型YAMLファイルでのマルチルーム・マルチエージェント環境管理が**今すぐ**利用できます：
+
+```bash
+# 1. インストール
+pip install haconiwa --upgrade
+
+# 2. YAMLファイルダウンロード（GitHubから直接取得）
+wget https://raw.githubusercontent.com/dai-motoki/haconiwa/main/haconiwa-multiroom-test.yaml
+
+# または curlでダウンロード
+curl -O https://raw.githubusercontent.com/dai-motoki/haconiwa/main/haconiwa-multiroom-test.yaml
+
+# ファイル内容確認
+cat haconiwa-multiroom-test.yaml
+
+# 3. YAML適用でマルチルーム環境作成
+haconiwa apply -f haconiwa-multiroom-test.yaml
+
+# 4. スペース一覧確認
+haconiwa space list
+
+# 5. スペース一覧確認（短縮形）
+haconiwa space ls
+
+# 6. 特定ルームに接続
+haconiwa space attach -c test-multiroom-company -r room-01
+
+# 7. 全ペインでclaudeコマンド実行
+haconiwa space run -c test-multiroom-company --claude-code
+
+# 8. 特定ルームでカスタムコマンド実行
+haconiwa space run -c test-multiroom-company --cmd "echo hello" -r room-01
+
+# 9. ドライランでコマンド確認
+haconiwa space run -c test-multiroom-company --claude-code --dry-run
+
+# 10. セッション停止
+haconiwa space stop -c test-multiroom-company
+
+# 11. 完全削除（ディレクトリも削除）
+haconiwa space delete -c test-multiroom-company --clean-dirs --force
+
+# 12. 完全削除（ディレクトリは保持）
+haconiwa space delete -c test-multiroom-company --force
+```
+
+**📁 自動作成されるマルチルーム構造:**
+```
+./test-multiroom-desks/
+├── standby/                 # 待機中エージェント（26 agents）
+│   └── README.md           # 自動生成説明ファイル
+└── tasks/                  # タスク割り当て済みエージェント（6 agents）
+    ├── main/               # メインGitリポジトリ
+    ├── 20250609061748_frontend-ui-design_01/     # タスク1
+    ├── 20250609061749_backend-api-development_02/ # タスク2
+    ├── 20250609061750_database-schema-design_03/  # タスク3
+    ├── 20250609061751_devops-ci-cd-pipeline_04/   # タスク4
+    ├── 20250609061752_user-authentication_05/     # タスク5
+    └── 20250609061753_performance-optimization_06/ # タスク6
+```
+
+**🏢 tmux構造（マルチルーム）:**
+```
+test-multiroom-company (Session)
+├── Window 0: Alpha Room (16ペイン)
+│   ├── org-01 (4ペイン): pm, worker-a, worker-b, worker-c
+│   ├── org-02 (4ペイン): pm, worker-a, worker-b, worker-c  
+│   ├── org-03 (4ペイン): pm, worker-a, worker-b, worker-c
+│   └── org-04 (4ペイン): pm, worker-a, worker-b, worker-c
+└── Window 1: Beta Room (16ペイン)
+    ├── org-01 (4ペイン): pm, worker-a, worker-b, worker-c
+    ├── org-02 (4ペイン): pm, worker-a, worker-b, worker-c
+    ├── org-03 (4ペイン): pm, worker-a, worker-b, worker-c
+    └── org-04 (4ペイン): pm, worker-a, worker-b, worker-c
+```
+
+**✅ YAML適用パターンの実際の機能:**
+- 🏢 **宣言型管理**: YAMLファイルによる環境定義
+- 🤖 **マルチルーム対応**: Room単位のWindow分離
+- 🔄 **自動ルーム分散**: ルーム別Windowでのペイン配置
+- 🚀 **一括コマンド実行**: 全ペインまたはルーム別実行
+- 🎯 **柔軟なターゲティング**: ルーム指定コマンド実行
+- 🏛️ **階層管理**: Nation > City > Village > Company
+- 📄 **外部設定**: YAML設定ファイルでの完全管理
+- 🗑️ **柔軟なクリーンアップ**: ディレクトリ保持・削除の選択
+- 📊 **32ペイン管理**: 2ルーム × 16ペイン構成
+- 🔧 **ドライラン対応**: 実行前のコマンド確認
+- 🎯 **タスク割り当てシステム**: エージェント自動ディレクトリ移動
+- 📋 **ログファイル管理**: agent_assignment.jsonでの割り当て記録
+
+### tmux マルチエージェント環境（従来方式）
 
 4x4グリッドのマルチエージェント開発環境を**今すぐ**作成・管理できます：
 
