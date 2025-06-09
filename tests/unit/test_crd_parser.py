@@ -93,8 +93,8 @@ spec:
         assert crd.metadata.name == "org02-pm"
         assert crd.spec.role == "pm"
         assert crd.spec.model == "o3"
-        assert crd.spec.space_ref == "haconiwa-company"
-        assert crd.spec.system_prompt_path == "prompts/org02/system_prompt.txt"
+        assert crd.spec.spaceRef == "haconiwa-company"
+        assert crd.spec.systemPromptPath == "prompts/org02/system_prompt.txt"
         
     def test_parse_task_crd_valid(self):
         """有効なTask CRDのパースをテスト"""
@@ -118,7 +118,7 @@ spec:
         assert crd.spec.branch == "feature/login"
         assert crd.spec.worktree is True
         assert crd.spec.assignee == "org01-wk-a-r1"
-        assert crd.spec.space_ref == "haconiwa-company"
+        assert crd.spec.spaceRef == "haconiwa-company"
         
     def test_parse_pathscan_crd_valid(self):
         """有効なPathScan CRDのパースをテスト"""
@@ -156,7 +156,7 @@ spec:
         assert isinstance(crd, DatabaseCRD)
         assert crd.metadata.name == "local-postgres"
         assert "postgresql://" in crd.spec.dsn
-        assert crd.spec.use_ssl is False
+        assert crd.spec.useSSL is False
         
     def test_parse_commandpolicy_crd_valid(self):
         """有効なCommandPolicy CRDのパースをテスト"""

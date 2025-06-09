@@ -6,6 +6,10 @@ import json
 import yaml
 from sqlalchemy.exc import SQLAlchemyError
 from haconiwa.core.config import Config
+import logging
+from typing import Dict, Any, List
+
+logger = logging.getLogger(__name__)
 
 class DBFetcher:
     def __init__(self):
@@ -60,6 +64,40 @@ class DBFetcher:
                     continue
                 else:
                     raise e
+
+class DatabaseManager:
+    """Database scanner and connection manager"""
+    
+    _configs = {}
+    
+    def __init__(self):
+        pass
+    
+    @classmethod
+    def register_config(cls, name: str, config: Dict[str, Any]):
+        """Register Database configuration"""
+        cls._configs[name] = config
+        logger.info(f"Registered Database config: {name}")
+    
+    def scan(self, config_name: str) -> Dict[str, Any]:
+        """Scan database using configuration"""
+        config = self._configs.get(config_name)
+        if not config:
+            logger.error(f"Database config not found: {config_name}")
+            return {}
+        
+        # Mock implementation - would use actual database connection
+        dsn = config.get("dsn")
+        use_ssl = config.get("use_ssl", False)
+        
+        logger.info(f"Scanning database with DSN: {dsn}, SSL: {use_ssl}")
+        
+        # Return mock results
+        return {
+            "tables": ["users", "posts", "comments", "tags"],
+            "views": ["user_posts", "comment_counts"],
+            "indexes": ["idx_users_email", "idx_posts_created_at"]
+        }
 
 # Example usage:
 # db_fetcher = DBFetcher()

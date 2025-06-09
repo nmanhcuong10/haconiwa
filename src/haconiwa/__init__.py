@@ -14,7 +14,7 @@ except ImportError:
 from .agent.base import BaseAgent
 from .agent.boss import BossAgent
 from .agent.worker import WorkerAgent
-from .agent.manager import ManagerAgent
+from .agent.manager import AgentManager
 from .task.worktree import WorktreeManager
 from .watch.monitor import Monitor
 
@@ -34,7 +34,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "types": {
             "boss": {"class": "BossAgent"},
             "worker": {"class": "WorkerAgent"},
-            "manager": {"class": "ManagerAgent"}
+            "manager": {"class": "AgentManager"}
         }
     }
 }
@@ -56,7 +56,7 @@ __all__.extend([
     "BaseAgent",
     "BossAgent", 
     "WorkerAgent",
-    "ManagerAgent",
+    "AgentManager",
     "WorktreeManager",
     "Monitor",
     "initialize",

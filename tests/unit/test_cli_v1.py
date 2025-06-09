@@ -55,12 +55,17 @@ class TestCLIv1:
     @patch("haconiwa.core.crd.parser.CRDParser.parse_file")
     def test_apply_command_single_file(self, mock_parse):
         """apply コマンドで単一ファイルを適用することをテスト"""
-        # Mock CRD object
+        # Mock CRD object with proper metadata structure
         mock_space_crd = MagicMock(spec=SpaceCRD)
-        mock_space_crd.metadata.name = "test-space"
+        mock_space_crd.kind = "Space"
+        mock_space_crd.apiVersion = "haconiwa.dev/v1"
+        mock_metadata = MagicMock()
+        mock_metadata.name = "test-space"
+        mock_space_crd.metadata = mock_metadata
         mock_parse.return_value = mock_space_crd
         
         with patch("pathlib.Path.exists", return_value=True), \
+             patch("builtins.open", mock_open(read_data="yaml content")), \
              patch("haconiwa.core.applier.CRDApplier.apply") as mock_apply:
             
             result = self.runner.invoke(app, ["apply", "-f", "test.yaml"])
@@ -73,9 +78,21 @@ class TestCLIv1:
     @patch("haconiwa.core.crd.parser.CRDParser.parse_multi_yaml")
     def test_apply_command_multi_document(self, mock_parse):
         """apply コマンドで複数ドキュメントYAMLを適用することをテスト"""
-        # Mock multiple CRD objects
+        # Mock multiple CRD objects with proper metadata
         mock_space_crd = MagicMock(spec=SpaceCRD)
+        mock_space_crd.kind = "Space"
+        mock_space_crd.apiVersion = "haconiwa.dev/v1"
+        mock_space_metadata = MagicMock()
+        mock_space_metadata.name = "test-space"
+        mock_space_crd.metadata = mock_space_metadata
+        
         mock_agent_crd = MagicMock(spec=AgentCRD)
+        mock_agent_crd.kind = "Agent"
+        mock_agent_crd.apiVersion = "haconiwa.dev/v1"
+        mock_agent_metadata = MagicMock()
+        mock_agent_metadata.name = "test-agent"
+        mock_agent_crd.metadata = mock_agent_metadata
+        
         mock_parse.return_value = [mock_space_crd, mock_agent_crd]
         
         with patch("builtins.open", mock_open(read_data="yaml content")), \
@@ -99,9 +116,15 @@ class TestCLIv1:
     def test_apply_command_dry_run(self):
         """apply コマンドのdry-runオプションをテスト"""
         mock_space_crd = MagicMock(spec=SpaceCRD)
+        mock_space_crd.kind = "Space"
+        mock_space_crd.apiVersion = "haconiwa.dev/v1"
+        mock_metadata = MagicMock()
+        mock_metadata.name = "test-space"
+        mock_space_crd.metadata = mock_metadata
         
         with patch("haconiwa.core.crd.parser.CRDParser.parse_file", return_value=mock_space_crd), \
              patch("pathlib.Path.exists", return_value=True), \
+             patch("builtins.open", mock_open(read_data="yaml content")), \
              patch("haconiwa.core.applier.CRDApplier.apply") as mock_apply:
             
             result = self.runner.invoke(app, ["apply", "-f", "test.yaml", "--dry-run"])

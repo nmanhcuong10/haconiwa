@@ -544,7 +544,7 @@ haconiwa policy delete <name>
 ├── org-04/04pm/          ← desk-0400
 ├── org-04/04worker-a/    ← desk-0401
 ├── org-04/04worker-b/    ← desk-0402
-├── org-04/04worker-c/    ← desk-0403
+└── org-04/04worker-c/    ← desk-0403
 ├── org-01/11pm/          ← desk-1100 (room-02)
 ├── org-01/11worker-a/    ← desk-1101 (room-02)
 ├── org-01/11worker-b/    ← desk-1102 (room-02)
@@ -791,4 +791,117 @@ organizations = [
 
 ---
 
-> この要件定義書は、Haconiwa v1.0の完全な仕様を定義しており、開発・テスト・デプロイの基準文書として使用されます。 
+## 13. 実装計画・タスクリスト
+
+### 13.1 最優先実装: YAML Apply → 32ペイン作成
+
+#### 🔥 Phase 1: 核となる機能完成（今すぐ実行）
+
+**1. SpaceManager の32ペイン対応修正**
+- [ ] `create_multiroom_session()` で32ペイン(8x4)レイアウト対応
+- [ ] `generate_desk_mappings()` でroom-01/room-02の正しいマッピング生成
+  - room-01: desk-0100~0403 (org-01~04 × pm+worker-abc)
+  - room-02: desk-1100~1403 (org-01~04 × pm+worker-abc)
+- [ ] ディレクトリ命名規則の修正
+  - room-01: `01pm`, `01worker-a` 形式
+  - room-02: `11pm`, `11worker-a` 形式 (先頭1追加)
+
+**2. CRDApplier のSpace CRD処理修正**
+- [ ] `_apply_space_crd()` でSpaceManager連携
+- [ ] `convert_crd_to_config()` でCRD→内部設定変換
+- [ ] Git repository連携（clone/pull）
+
+**3. 統合テスト修正**
+- [ ] Mock設定エラー修正（metadata属性）
+- [ ] Policy Engine ロール拒否ロジック修正
+- [ ] SpaceManager 32ペイン作成テスト修正
+
+#### 🎯 Phase 2: エンドツーエンドテスト
+
+**4. YAML Apply完全動作確認**
+```bash
+# 目標動作フロー
+haconiwa init
+haconiwa apply -f test-32desk.yaml
+# → /tmp/test-desks/ に32デスクディレクトリ作成
+# → tmux セッション「test-company」で32ペイン作成
+# → 各ペインが正しいディレクトリを指している
+```
+
+**5. テストケース完全クリア**
+- [ ] 3つの主要テスト維持（CRD Parser, Policy Engine, CLI init）
+- [ ] 残り98テスト中の主要エラー修正
+- [ ] 全テストグリーン達成
+
+#### 📊 Phase 3: 残り機能実装
+
+**6. Tool統合完成**
+- [ ] `haconiwa tool --scan-filepath` 動作
+- [ ] `haconiwa tool --scan-db` 動作
+- [ ] JSON/YAML出力対応
+
+**7. Policy機能完成**
+- [ ] 役割別allow/deny正常動作
+- [ ] `haconiwa policy test` コマンド完全動作
+- [ ] 悪意のあるコマンド検出
+
+### 13.2 実装状況トラッキング
+
+| 機能 | 現在の状況 | 目標 | 優先度 |
+|------|------------|------|--------|
+| ✅ CRD Parser | 動作中 | 維持 | 最高 |
+| ✅ CLI init | 動作中 | 維持 | 最高 |
+| ✅ Policy基礎 | 動作中 | ロール拒否修正 | 高 |
+| 🚧 SpaceManager | 16ペイン | **32ペイン対応** | **最高** |
+| 🚧 CRD Apply | 基礎実装 | **Space CRD完全対応** | **最高** |
+| ❌ Tool統合 | Mock実装 | 実機能実装 | 中 |
+| ❌ 32ペインテスト | 失敗中 | 全パス | 高 |
+
+### 13.3 成功基準
+
+**✅ Phase 1完了の定義:**
+```bash
+# このYAMLが完全動作すること
+apiVersion: haconiwa.dev/v1
+kind: Space
+metadata:
+  name: test-world
+spec:
+  nations:
+  - id: jp
+    cities:
+    - id: tokyo
+      villages:
+      - id: test
+        companies:
+        - name: test-company
+          grid: 8x4
+          
+          basePath: /tmp/test-desks
+          organizations:
+          - {id: "01", name: "Frontend Dept"}
+          - {id: "02", name: "Backend Dept"}
+          - {id: "03", name: "Database Dept"}
+          - {id: "04", name: "DevOps Dept"}
+          buildings:
+          - id: hq
+            floors:
+            - level: 1
+              rooms:
+              - {id: "room-01", name: "Alpha Room"}
+              - {id: "room-02", name: "Beta Room"}
+
+# 実行結果:
+# 1. 32個のディレクトリ作成
+# 2. tmux session「test-company」で32ペイン
+# 3. 各ペインが適切なディレクトリをカレントディレクトリとしている
+```
+
+**✅ 最終完了の定義:**
+- 主要3テスト維持 + 残りテスト95%以上パス
+- `haconiwa apply -f haconiwa-resources.yaml` で完全な32デスク環境構築
+- 全CLI機能正常動作
+
+---
+
+> この実装計画は、YAML apply → 32ペイン作成を最優先として、段階的にv1.0完成を目指します。 

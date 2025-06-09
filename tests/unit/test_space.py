@@ -1,128 +1,139 @@
 import pytest
-from unittest.mock import Mock, patch
-from haconiwa.space.tmux import TmuxManager, TmuxError
+from unittest.mock import Mock, patch, MagicMock
+from haconiwa.space.tmux import TmuxSession, TmuxSessionError
+from haconiwa.core.config import Config
 
 @pytest.fixture
-def tmux_manager():
-    return TmuxManager()
+def mock_config():
+    config = Mock(spec=Config)
+    return config
 
 @pytest.fixture
-def mock_libtmux():
-    with patch('haconiwa.space.tmux.libtmux') as mock:
-        yield mock
+def tmux_session(mock_config):
+    with patch('haconiwa.space.tmux.libtmux.Server'):
+        return TmuxSession(mock_config)
 
-def test_create_session(tmux_manager, mock_libtmux):
-    mock_server = Mock()
-    mock_libtmux.Server.return_value = mock_server
-    mock_session = Mock()
-    mock_server.new_session.return_value = mock_session
+class TestTmuxSession:
+    @patch('subprocess.run')
+    def test_validate_tmux_success(self, mock_run, mock_config):
+        mock_run.return_value.returncode = 0
+        session = TmuxSession(mock_config)
+        # Should not raise exception
 
-    session = tmux_manager.create_session("test-session")
-    
-    mock_server.new_session.assert_called_once_with(session_name="test-session")
-    assert session == mock_session
+    @patch('subprocess.run')
+    def test_validate_tmux_failure(self, mock_run, mock_config):
+        mock_run.side_effect = FileNotFoundError()
+        with pytest.raises(TmuxSessionError):
+            TmuxSession(mock_config)
 
-def test_create_session_exists(tmux_manager, mock_libtmux):
-    mock_server = Mock()
-    mock_libtmux.Server.return_value = mock_server
-    mock_server.new_session.side_effect = libtmux.exc.TmuxSessionExists
-
-    with pytest.raises(TmuxError):
-        tmux_manager.create_session("existing-session")
-
-def test_get_session(tmux_manager, mock_libtmux):
-    mock_server = Mock()
-    mock_libtmux.Server.return_value = mock_server
-    mock_session = Mock()
-    mock_server.find_where.return_value = mock_session
-
-    session = tmux_manager.get_session("test-session")
-    
-    mock_server.find_where.assert_called_once_with({"session_name": "test-session"})
-    assert session == mock_session
-
-def test_get_session_not_found(tmux_manager, mock_libtmux):
-    mock_server = Mock()
-    mock_libtmux.Server.return_value = mock_server
-    mock_server.find_where.return_value = None
-
-    with pytest.raises(TmuxError):
-        tmux_manager.get_session("non-existing-session")
-
-def test_resize_pane(tmux_manager, mock_libtmux):
-    mock_pane = Mock()
-    mock_pane.set_height = Mock()
-    mock_pane.set_width = Mock()
-
-    tmux_manager.resize_pane(mock_pane, width=80, height=24)
-
-    mock_pane.set_width.assert_called_once_with(80)
-    mock_pane.set_height.assert_called_once_with(24)
-
-def test_split_window(tmux_manager, mock_libtmux):
-    mock_window = Mock()
-    mock_pane = Mock()
-    mock_window.split_window.return_value = mock_pane
-
-    pane = tmux_manager.split_window(mock_window, vertical=True)
-
-    mock_window.split_window.assert_called_once_with(vertical=True)
-    assert pane == mock_pane
-
-def test_kill_session(tmux_manager, mock_libtmux):
-    mock_session = Mock()
-    mock_session.kill_session = Mock()
-
-    tmux_manager.kill_session(mock_session)
-
-    mock_session.kill_session.assert_called_once()
-
-def test_list_sessions(tmux_manager, mock_libtmux):
-    mock_server = Mock()
-    mock_libtmux.Server.return_value = mock_server
-    mock_sessions = [Mock(), Mock()]
-    mock_server.list_sessions.return_value = mock_sessions
-
-    sessions = tmux_manager.list_sessions()
-
-    assert sessions == mock_sessions
-    mock_server.list_sessions.assert_called_once()
-
-def test_tmux_not_installed(mock_libtmux):
-    mock_libtmux.Server.side_effect = FileNotFoundError
-    
-    with pytest.raises(TmuxError, match="tmux is not installed"):
-        TmuxManager()
-
-def test_concurrent_sessions(tmux_manager, mock_libtmux):
-    mock_server = Mock()
-    mock_libtmux.Server.return_value = mock_server
-    mock_sessions = []
-    
-    for i in range(5):
+    @patch('haconiwa.space.tmux.libtmux.Server')
+    def test_create_session_success(self, mock_server_class, mock_config):
+        mock_server = Mock()
+        mock_server_class.return_value = mock_server
+        mock_server.has_session.return_value = False
         mock_session = Mock()
-        mock_session.name = f"session-{i}"
-        mock_sessions.append(mock_session)
         mock_server.new_session.return_value = mock_session
         
-        session = tmux_manager.create_session(f"session-{i}")
-        assert session.name == f"session-{i}"
-    
-    mock_server.list_sessions.return_value = mock_sessions
-    sessions = tmux_manager.list_sessions()
-    assert len(sessions) == 5
+        with patch('subprocess.run'):
+            session = TmuxSession(mock_config)
+            result = session.create_session('test')
+            
+            assert result == mock_session
+            mock_server.new_session.assert_called_once()
 
-def test_session_layout(tmux_manager, mock_libtmux):
-    mock_window = Mock()
-    mock_panes = [Mock() for _ in range(4)]
-    mock_window.split_window.side_effect = mock_panes[1:]
-    mock_window.panes = mock_panes
+    @patch('haconiwa.space.tmux.libtmux.Server')
+    def test_create_session_exists(self, mock_server_class, mock_config):
+        mock_server = Mock()
+        mock_server_class.return_value = mock_server
+        mock_server.has_session.return_value = True
+        
+        with patch('subprocess.run'):
+            session = TmuxSession(mock_config)
+            with pytest.raises(TmuxSessionError):
+                session.create_session('test')
 
-    panes = []
-    panes.append(mock_window)
-    for i in range(3):
-        panes.append(tmux_manager.split_window(mock_window, vertical=i % 2 == 0))
+    def test_list_sessions(self, tmux_session):
+        mock_session = Mock()
+        mock_session.name = 'test-session'
+        mock_session.get.return_value = '2024-01-01'
+        mock_session.list_windows.return_value = [Mock(), Mock()]
+        mock_session.attached = True
+        
+        tmux_session.server.list_sessions.return_value = [mock_session]
+        
+        sessions = tmux_session.list_sessions()
+        
+        assert len(sessions) == 1
+        assert sessions[0]['name'] == 'test-session'
+        assert sessions[0]['windows'] == 2
 
-    assert len(mock_window.panes) == 4
-    for i, pane in enumerate(mock_panes[1:], 1):
-        mock_window.split_window.assert_any_call(vertical=i % 2 == 0)
+    def test_get_session_found(self, tmux_session):
+        mock_session = Mock()
+        tmux_session.server.find_where.return_value = mock_session
+        
+        result = tmux_session.get_session('test')
+        
+        assert result == mock_session
+
+    def test_get_session_not_found(self, tmux_session):
+        import libtmux.exc
+        tmux_session.server.find_where.side_effect = libtmux.exc.TmuxCommandError()
+        
+        result = tmux_session.get_session('test')
+        
+        assert result is None
+
+    def test_send_command(self, tmux_session):
+        mock_session = Mock()
+        mock_window = Mock()
+        mock_pane = Mock()
+        mock_session.attached_window = mock_window
+        mock_window.attached_pane = mock_pane
+        
+        tmux_session.server.find_where.return_value = mock_session
+        
+        tmux_session.send_command('test', 'ls')
+        
+        mock_pane.send_keys.assert_called_once_with('ls')
+
+    def test_kill_session_success(self, tmux_session):
+        mock_session = Mock()
+        tmux_session.server.find_where.return_value = mock_session
+        
+        tmux_session.kill_session('test')
+        
+        mock_session.kill_session.assert_called_once()
+
+    def test_kill_session_not_found(self, tmux_session):
+        tmux_session.server.find_where.return_value = None
+        
+        with pytest.raises(TmuxSessionError):
+            tmux_session.kill_session('test')
+
+    @patch('haconiwa.space.tmux.subprocess.run')
+    def test_create_multiagent_session(self, mock_run, tmux_session):
+        # Mock successful subprocess calls
+        mock_run.return_value.returncode = 0
+        
+        # Mock file system operations
+        with patch('pathlib.Path.mkdir'), \
+             patch('pathlib.Path.write_text'), \
+             patch('time.strftime'):
+            
+            result = tmux_session.create_multiagent_session(
+                'test-company',
+                '/test/path',
+                [{"id": "org-01", "org_name": "Test Org", "task_name": "Test Task", "workspace": "test-desk"}]
+            )
+            
+            # Should not raise exception and subprocess commands should be called
+            assert mock_run.called
+
+    def test_is_session_alive(self, tmux_session):
+        mock_session = Mock()
+        tmux_session.server.find_where.return_value = mock_session
+        
+        assert tmux_session.is_session_alive('test') is True
+        
+        tmux_session.server.find_where.return_value = None
+        assert tmux_session.is_session_alive('test') is False

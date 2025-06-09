@@ -14,13 +14,13 @@ try:
     from haconiwa.agent.base import BaseAgent
     from haconiwa.agent.boss import BossAgent  
     from haconiwa.agent.worker import WorkerAgent
-    from haconiwa.agent.manager import ManagerAgent
+    from haconiwa.agent.manager import AgentManager
 except ImportError:
     # Handle import errors gracefully for CI/CD environments
     BaseAgent = None
     BossAgent = None
     WorkerAgent = None
-    ManagerAgent = None
+    AgentManager = None
 
 
 class TestAgentModule:
@@ -57,12 +57,12 @@ class TestAgentModule:
         assert WorkerAgent is not None
         # TODO: Add actual WorkerAgent tests when implementation is available
     
-    @pytest.mark.skipif(ManagerAgent is None, reason="ManagerAgent not available")  
+    @pytest.mark.skipif(AgentManager is None, reason="AgentManager not available")  
     def test_manager_agent_functionality(self):
-        """Test ManagerAgent class functionality"""
-        # This is a placeholder test - implement according to actual ManagerAgent interface
-        assert ManagerAgent is not None
-        # TODO: Add actual ManagerAgent tests when implementation is available
+        """Test AgentManager class functionality"""
+        # This is a placeholder test - implement according to actual AgentManager interface
+        assert AgentManager is not None
+        # TODO: Add actual AgentManager tests when implementation is available
     
     def test_agent_module_structure(self):
         """Test that agent module structure is correct"""
@@ -88,15 +88,15 @@ class TestAgentModule:
     def test_task_assignment_mock(self):
         """Test task assignment functionality using mocks"""
         # Mock test for task assignment
-        with mock.patch('haconiwa.agent.manager.ManagerAgent') as mock_manager:
+        with mock.patch('haconiwa.agent.manager.AgentManager') as mock_manager:
             mock_instance = mock_manager.return_value
-            mock_instance.assign_task.return_value = {"status": "assigned", "task_id": "123"}
+            mock_instance.create_agent.return_value = {"status": "created", "agent_id": "123"}
             
-            # Test mock task assignment
-            result = mock_instance.assign_task("test task")
-            assert result["status"] == "assigned"
-            assert "task_id" in result
-            mock_instance.assign_task.assert_called_once_with("test task")
+            # Test mock agent creation
+            result = mock_instance.create_agent({"name": "test-agent", "role": "worker"})
+            assert result["status"] == "created"
+            assert "agent_id" in result
+            mock_instance.create_agent.assert_called_once_with({"name": "test-agent", "role": "worker"})
     
     def test_ai_model_integration_mock(self):
         """Test AI model integration using mocks"""

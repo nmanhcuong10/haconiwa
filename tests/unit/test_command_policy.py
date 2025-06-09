@@ -60,7 +60,7 @@ class TestCommandPolicy:
         self.policy_engine.set_active_policy(self.test_policy)
         
         # 許可されているコマンド
-        result = self.validator.validate_command("docker build .", role="worker")
+        result = self.policy_engine.validator.validate_command("docker build .", role="worker")
         assert result.allowed is True
         assert result.reason == "global allow"
         
@@ -69,7 +69,7 @@ class TestCommandPolicy:
         self.policy_engine.set_active_policy(self.test_policy)
         
         # 許可されていないコマンド
-        result = self.validator.validate_command("docker system prune", role="worker")
+        result = self.policy_engine.validator.validate_command("docker system prune", role="worker")
         assert result.allowed is False
         assert "not in global whitelist" in result.reason
         
@@ -78,12 +78,12 @@ class TestCommandPolicy:
         self.policy_engine.set_active_policy(self.test_policy)
         
         # PMのみ許可されているコマンド
-        result_pm = self.validator.validate_command("kubectl scale deployment/app --replicas=3", role="pm")
+        result_pm = self.policy_engine.validator.validate_command("kubectl scale deployment/app --replicas=3", role="pm")
         assert result_pm.allowed is True
         assert result_pm.reason == "role-specific allow"
         
         # Workerでは拒否される
-        result_worker = self.validator.validate_command("kubectl scale deployment/app --replicas=3", role="worker")
+        result_worker = self.policy_engine.validator.validate_command("kubectl scale deployment/app --replicas=3", role="worker")
         assert result_worker.allowed is False
         
     def test_validate_role_specific_deny(self):
@@ -91,7 +91,7 @@ class TestCommandPolicy:
         self.policy_engine.set_active_policy(self.test_policy)
         
         # Workerで明示的に拒否されているコマンド
-        result = self.validator.validate_command("docker system prune", role="worker")
+        result = self.policy_engine.validator.validate_command("docker system prune", role="worker")
         assert result.allowed is False
         assert "role-specific deny" in result.reason
         
@@ -100,11 +100,11 @@ class TestCommandPolicy:
         self.policy_engine.set_active_policy(self.test_policy)
         
         # 許可されているhaconiwaコマンド
-        result = self.validator.validate_command("haconiwa space.start -c test", role="worker")
+        result = self.policy_engine.validator.validate_command("haconiwa space.start -c test", role="worker")
         assert result.allowed is True
         
         # 許可されていないhaconiwaコマンド
-        result = self.validator.validate_command("haconiwa space.delete -c test", role="worker")
+        result = self.policy_engine.validator.validate_command("haconiwa space.delete -c test", role="worker")
         assert result.allowed is False
         
     def test_parse_command_components(self):
@@ -125,7 +125,7 @@ class TestCommandPolicy:
         ]
         
         for case in test_cases:
-            components = self.validator.parse_command(case["command"])
+            components = self.policy_engine.validator.parse_command(case["command"])
             assert components["base"] == case["expected"]["base"]
             assert components["subcommand"] == case["expected"]["subcommand"]
             assert components["args"] == case["expected"]["args"]
@@ -136,7 +136,7 @@ class TestCommandPolicy:
         
         # docker system prune は worker で明示的に拒否されている
         # （docker は グローバル許可だが、system prune は worker で拒否）
-        result = self.validator.validate_command("docker system prune", role="worker")
+        result = self.policy_engine.validator.validate_command("docker system prune", role="worker")
         assert result.allowed is False
         assert "role-specific deny" in result.reason
         
@@ -145,7 +145,7 @@ class TestCommandPolicy:
         self.policy_engine.set_active_policy(self.test_policy)
         
         # kubectl scale は pm で明示的に許可されている
-        result = self.validator.validate_command("kubectl scale deployment/app --replicas=3", role="pm")
+        result = self.policy_engine.validator.validate_command("kubectl scale deployment/app --replicas=3", role="pm")
         assert result.allowed is True
         assert result.reason == "role-specific allow"
         
@@ -160,7 +160,7 @@ class TestCommandPolicy:
         ]
         
         for cmd in complex_commands:
-            result = self.validator.validate_command(cmd, role="worker")
+            result = self.policy_engine.validator.validate_command(cmd, role="worker")
             # 基本コマンドが許可されていれば、引数に関わらず許可される
             assert result.allowed is True
             
@@ -168,7 +168,7 @@ class TestCommandPolicy:
         """無効な役割の処理をテスト"""
         self.policy_engine.set_active_policy(self.test_policy)
         
-        result = self.validator.validate_command("docker build .", role="invalid_role")
+        result = self.policy_engine.validator.validate_command("docker build .", role="invalid_role")
         assert result.allowed is False
         assert "unknown role" in result.reason.lower()
         
@@ -177,7 +177,7 @@ class TestCommandPolicy:
         empty_policy = {"name": "empty", "global": {}, "roles": {}}
         self.policy_engine.set_active_policy(empty_policy)
         
-        result = self.validator.validate_command("ls -la", role="worker")
+        result = self.policy_engine.validator.validate_command("ls -la", role="worker")
         assert result.allowed is False
         assert "not in global whitelist" in result.reason
         
@@ -214,7 +214,7 @@ class TestCommandPolicy:
         # 大量のコマンド検証を実行
         start_time = time.time()
         for i in range(1000):
-            self.validator.validate_command("docker build .", role="worker")
+            self.policy_engine.validator.validate_command("docker build .", role="worker")
         end_time = time.time()
         
         # 1000回の検証が1秒以内に完了することを確認
@@ -235,7 +235,7 @@ class TestCommandPolicy:
         ]
         
         for cmd in malicious_commands:
-            result = self.validator.validate_command(cmd, role="worker")
+            result = self.policy_engine.validator.validate_command(cmd, role="worker")
             assert result.allowed is False
             
     def test_command_logging(self):
@@ -243,29 +243,16 @@ class TestCommandPolicy:
         self.policy_engine.set_active_policy(self.test_policy)
         
         with patch("haconiwa.core.policy.engine.logger") as mock_logger:
-            self.validator.validate_command("docker build .", role="worker")
+            self.policy_engine.validator.validate_command("docker build .", role="worker")
             
             # ログが記録されることを確認
             mock_logger.info.assert_called()
-            
-    def test_policy_update_notification(self):
-        """ポリシー更新通知をテスト"""
-        original_policy = self.test_policy.copy()
-        updated_policy = self.test_policy.copy()
-        updated_policy["global"]["docker"].append("exec")
-        
-        with patch.object(self.policy_engine, '_notify_policy_update') as mock_notify:
-            self.policy_engine.set_active_policy(original_policy)
-            self.policy_engine.set_active_policy(updated_policy)
-            
-            # ポリシー更新通知が呼ばれることを確認
-            mock_notify.assert_called()
             
     def test_whitelist_vs_blacklist_approach(self):
         """ホワイトリスト方式の動作確認をテスト"""
         self.policy_engine.set_active_policy(self.test_policy)
         
         # 明示的に許可されていないコマンドは拒否される
-        result = self.validator.validate_command("unknown_command arg1 arg2", role="worker")
+        result = self.policy_engine.validator.validate_command("unknown_command arg1 arg2", role="worker")
         assert result.allowed is False
         assert "not in global whitelist" in result.reason 

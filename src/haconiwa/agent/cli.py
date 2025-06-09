@@ -7,7 +7,7 @@ from rich import print as rprint
 from haconiwa.agent.base import BaseAgent
 from haconiwa.agent.boss import BossAgent
 from haconiwa.agent.worker import WorkerAgent, WorkerSpecialty
-from haconiwa.agent.manager import ManagerAgent
+from haconiwa.agent.manager import AgentManager
 from haconiwa.core.config import Config
 
 console = Console()
@@ -28,7 +28,7 @@ def spawn(
         elif agent_type == "worker":
             agent = WorkerAgent(agent_id, WorkerSpecialty.FRONTEND, config)
         elif agent_type == "manager":
-            agent = ManagerAgent(agent_id, config)
+            agent = AgentManager()
         else:
             rprint(f"[red]Error:[/red] Unknown agent type: {agent_type}")
             raise typer.Exit(1)
