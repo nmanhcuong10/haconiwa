@@ -1,0 +1,108 @@
+#!/usr/bin/env node
+
+const spawn = require('cross-spawn');
+const path = require('path');
+
+// Check if haconiwa is installed via pip
+function checkHaconiwaInstallation() {
+  try {
+    const result = spawn.sync('haconiwa', ['--version'], { stdio: 'pipe' });
+    if (result.status === 0) {
+      return true;
+    }
+  } catch (error) {
+    // Command not found
+  }
+  
+  // Try python -m haconiwa
+  try {
+    const result = spawn.sync('python', ['-m', 'haconiwa', '--version'], { stdio: 'pipe' });
+    if (result.status === 0) {
+      return 'python-module';
+    }
+  } catch (error) {
+    // Command not found
+  }
+  
+  // Try python3 -m haconiwa
+  try {
+    const result = spawn.sync('python3', ['-m', 'haconiwa', '--version'], { stdio: 'pipe' });
+    if (result.status === 0) {
+      return 'python3-module';
+    }
+  } catch (error) {
+    // Command not found
+  }
+  
+  return false;
+}
+
+function showInstallInstructions() {
+  console.error(`
+❌ Haconiwa Python package is not installed.
+
+📦 Please install haconiwa via pip:
+
+  pip install haconiwa --upgrade
+
+Or if you prefer pip3:
+
+  pip3 install haconiwa --upgrade
+
+🔗 More information:
+  - PyPI: https://pypi.org/project/haconiwa/
+  - GitHub: https://github.com/dai-motoki/haconiwa
+
+After installation, try running 'haconiwa --help' again.
+`);
+}
+
+function main() {
+  const installationType = checkHaconiwaInstallation();
+  
+  if (!installationType) {
+    showInstallInstructions();
+    process.exit(1);
+  }
+  
+  // Prepare command and arguments
+  let command;
+  let args;
+  
+  if (installationType === 'python-module') {
+    command = 'python';
+    args = ['-m', 'haconiwa'].concat(process.argv.slice(2));
+  } else if (installationType === 'python3-module') {
+    command = 'python3';
+    args = ['-m', 'haconiwa'].concat(process.argv.slice(2));
+  } else {
+    // Direct haconiwa command
+    command = 'haconiwa';
+    args = process.argv.slice(2);
+  }
+  
+  // Execute haconiwa with all arguments
+  const child = spawn(command, args, {
+    stdio: 'inherit',
+    shell: false
+  });
+  
+  child.on('exit', (code, signal) => {
+    if (signal) {
+      process.kill(process.pid, signal);
+    } else {
+      process.exit(code);
+    }
+  });
+  
+  child.on('error', (error) => {
+    console.error('Error executing haconiwa:', error.message);
+    process.exit(1);
+  });
+}
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = { checkHaconiwaInstallation, main }; 

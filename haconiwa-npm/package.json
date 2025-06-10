@@ -1,0 +1,54 @@
+{
+  "name": "haconiwa",
+  "version": "0.4.0",
+  "description": "AI collaborative development support CLI tool - tmux company management, git-worktree integration, task management, and AI agent coordination",
+  "main": "index.js",
+  "bin": {
+    "haconiwa": "./bin/haconiwa"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "node check-python.js"
+  },
+  "keywords": [
+    "ai",
+    "collaborative",
+    "development",
+    "tmux",
+    "git-worktree",
+    "task-management",
+    "agent",
+    "cli",
+    "python",
+    "wrapper"
+  ],
+  "author": "Daisuke Motoki <kanri@kandaquantum.co.jp>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dai-motoki/haconiwa.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dai-motoki/haconiwa/issues"
+  },
+  "homepage": "https://github.com/dai-motoki/haconiwa#readme",
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "dependencies": {
+    "cross-spawn": "^7.0.3"
+  },
+  "devDependencies": {},
+  "files": [
+    "bin/",
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "preferGlobal": true,
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ]
+} 
